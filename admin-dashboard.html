@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Sts. Joachim and Anne</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/admin-style.css">
+    <!-- PWA: Admin-only manifest -->
+    <link rel="manifest" href="/admin-manifest.json">
+    <meta name="theme-color" content="#1e3a5f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SJACS Admin">
+    <link rel="apple-touch-icon" href="/images/logo.png">
+</head>
+<body class="dashboard-body">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark-custom shadow-sm sticky-top">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <img src="images/logo.png" alt="Logo" height="40" class="me-2 rounded">
+                <span class="fw-bold tracking-wide">SS JOACIM ADMIN</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="adminNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item me-3">
+                        <a href="/" class="nav-link text-white-50" target="_blank"><i class="fas fa-external-link-alt me-1"></i> View Site</a>
+                    </li>
+                    <!-- Notification Bell -->
+                    <li class="nav-item me-3 position-relative">
+                        <button class="btn btn-link text-white position-relative p-2" id="notifBell" onclick="openNotifPanel()" title="Notifications">
+                            <i class="fas fa-bell fa-lg"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" id="notifBadge">0</span>
+                        </button>
+                    </li>
+                    <!-- Install PWA Button (shown by browser prompt) -->
+                    <li class="nav-item me-2">
+                        <button class="btn btn-outline-warning btn-sm px-3 rounded-pill d-none" id="installBtn" onclick="installPWA()">
+                            <i class="fas fa-download me-1"></i> Install App
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="btn btn-outline-light btn-sm px-3 rounded-pill" onclick="logout()"><i class="fas fa-sign-out-alt me-1"></i> Logout</button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="row mb-5 align-items-end">
+            <div class="col-md-8">
+                <h2 class="fw-bold mb-1">Dashboard Overview</h2>
+                <p class="text-muted mb-0">Manage website content, images, and global settings dynamically.</p>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <button class="btn btn-primary rounded-pill shadow-sm px-4" onclick="saveAllSettings()">
+                    <i class="fas fa-save me-2"></i> Save All Changes
+                </button>
+            </div>
+        </div>
+
+        <div id="statusMessage" class="alert d-none mb-4" role="alert"></div>
+
+        <div class="row g-4">
+            <!-- Global Settings Section -->
+            <div class="col-lg-12">
+                <div class="card admin-card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white border-0 pt-4 pb-0 px-4">
+                        <h5 class="fw-bold mb-0 text-primary"><i class="fas fa-cog me-2"></i> Global Settings</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Academic Year</label>
+                                <input type="text" class="form-control" id="academic_year" placeholder="e.g. 2026/2027">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Current Term</label>
+                                <input type="text" class="form-control" id="current_term" placeholder="e.g. First Term">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- About Page Content Section -->
+            <div class="col-lg-12">
+                <div class="card admin-card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white border-0 pt-4 pb-0 px-4">
+                        <h5 class="fw-bold mb-0 text-success"><i class="fas fa-file-alt me-2"></i> About Page Content</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Welcome Message / Intro</label>
+                            <textarea class="form-control" id="about_intro" rows="3" placeholder="Enter introductory text..."></textarea>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Our Mission</label>
+                                <textarea class="form-control" id="about_mission" rows="4" placeholder="Enter school mission..."></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Our Vision</label>
+                                <textarea class="form-control" id="about_vision" rows="4" placeholder="Enter school vision..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Image Management Section -->
+            <div class="col-lg-12">
+                <div class="card admin-card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white border-0 pt-4 pb-0 px-4">
+                        <h5 class="fw-bold mb-0 text-warning"><i class="fas fa-images me-2"></i> Image Management</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-4">
+                            <!-- Priest Photo Upload -->
+                            <div class="col-md-4">
+                                <div class="image-upload-wrapper text-center p-4 border rounded bg-light position-relative overflow-hidden">
+                                    <div class="mb-3">
+                                        <img id="preview_priest_image" src="images/placeholder.jpg" class="img-fluid rounded shadow-sm" style="max-height: 150px; object-fit: cover;">
+                                    </div>
+                                    <h6 class="fw-semibold">Parish Priest Photo</h6>
+                                    <textarea class="form-control mb-2 mt-2" id="priest_description" rows="2" placeholder="Priest Description"></textarea>
+                                    <label for="upload_priest" class="btn btn-sm btn-outline-primary mt-2 rounded-pill">Choose File</label>
+                                    <input type="file" id="upload_priest" class="d-none" accept="image/*" onchange="uploadImage(this, 'priest_image')">
+                                    <div class="upload-progress d-none mt-2">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div> Uploading...
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Hero Background Upload -->
+                            <div class="col-md-4">
+                                <div class="image-upload-wrapper text-center p-4 border rounded bg-light position-relative overflow-hidden">
+                                    <div class="mb-3">
+                                        <img id="preview_hero_bg" src="images/placeholder.jpg" class="img-fluid rounded shadow-sm" style="max-height: 150px; object-fit: cover;">
+                                    </div>
+                                    <h6 class="fw-semibold">Home Hero Background</h6>
+                                    <label for="upload_hero" class="btn btn-sm btn-outline-primary mt-2 rounded-pill">Choose File</label>
+                                    <input type="file" id="upload_hero" class="d-none" accept="image/*" onchange="uploadImage(this, 'hero_bg')">
+                                    <div class="upload-progress d-none mt-2">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div> Uploading...
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- About Page Image Upload -->
+                            <div class="col-md-4">
+                                <div class="image-upload-wrapper text-center p-4 border rounded bg-light position-relative overflow-hidden">
+                                    <div class="mb-3">
+                                        <img id="preview_about_image" src="images/placeholder.jpg" class="img-fluid rounded shadow-sm" style="max-height: 150px; object-fit: cover;">
+                                    </div>
+                                    <h6 class="fw-semibold">About Page Image</h6>
+                                    <label for="upload_about" class="btn btn-sm btn-outline-primary mt-2 rounded-pill">Choose File</label>
+                                    <input type="file" id="upload_about" class="d-none" accept="image/*" onchange="uploadImage(this, 'about_image')">
+                                    <div class="upload-progress d-none mt-2">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div> Uploading...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prefects Section -->
+            <div class="col-lg-12">
+                <div class="card admin-card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white border-0 pt-4 pb-0 px-4">
+                        <h5 class="fw-bold mb-0 text-info"><i class="fas fa-user-graduate me-2"></i> Prefects Section</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-4">
+                            <!-- Head Boy Upload -->
+                            <div class="col-md-6">
+                                <div class="image-upload-wrapper text-center p-4 border rounded bg-light position-relative overflow-hidden">
+                                    <div class="mb-3">
+                                        <img id="preview_headboy_image" src="images/placeholder.jpg" class="img-fluid rounded shadow-sm" style="max-height: 150px; object-fit: cover;">
+                                    </div>
+                                    <h6 class="fw-semibold">Head Boy Photo</h6>
+                                    <input type="text" class="form-control mb-2 text-center" id="headboy_name" placeholder="Enter Head Boy's Name">
+                                    <label for="upload_headboy" class="btn btn-sm btn-outline-primary mt-2 rounded-pill">Choose File</label>
+                                    <input type="file" id="upload_headboy" class="d-none" accept="image/*" onchange="uploadImage(this, 'headboy_image')">
+                                    <div class="upload-progress d-none mt-2">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div> Uploading...
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Head Girl Upload -->
+                            <div class="col-md-6">
+                                <div class="image-upload-wrapper text-center p-4 border rounded bg-light position-relative overflow-hidden">
+                                    <div class="mb-3">
+                                        <img id="preview_headgirl_image" src="images/placeholder.jpg" class="img-fluid rounded shadow-sm" style="max-height: 150px; object-fit: cover;">
+                                    </div>
+                                    <h6 class="fw-semibold">Head Girl Photo</h6>
+                                    <input type="text" class="form-control mb-2 text-center" id="headgirl_name" placeholder="Enter Head Girl's Name">
+                                    <label for="upload_headgirl" class="btn btn-sm btn-outline-primary mt-2 rounded-pill">Choose File</label>
+                                    <input type="file" id="upload_headgirl" class="d-none" accept="image/*" onchange="uploadImage(this, 'headgirl_image')">
+                                    <div class="upload-progress d-none mt-2">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div> Uploading...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Gallery Section -->
+            <div class="col-lg-12">
+                <div class="card admin-card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white border-0 pt-4 pb-0 px-4">
+                        <h5 class="fw-bold mb-0" style="color: #6366f1;"><i class="fas fa-camera-retro me-2"></i> Gallery Manager</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="p-4 border rounded bg-light mb-4">
+                            <h6 class="fw-bold mb-3">Add New Gallery Image</h6>
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-3">
+                                    <label class="form-label">Category</label>
+                                    <select class="form-select" id="gallery_category">
+                                        <option value="events">Events</option>
+                                        <option value="classrooms">Classrooms</option>
+                                        <option value="sports">Sports</option>
+                                        <option value="mass">Mass</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label">Title / Caption</label>
+                                    <input type="text" class="form-control" id="gallery_title" placeholder="e.g. Inter-house Sports 2026">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label d-block">Select Image</label>
+                                    <input type="file" class="form-control" id="gallery_upload_input" accept="image/*">
+                                </div>
+                                <div class="col-12 mt-3 text-end">
+                                    <button class="btn btn-primary rounded-pill px-4" onclick="uploadGalleryImage()">
+                                        <i class="fas fa-cloud-upload-alt me-2"></i> Upload to Gallery
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h6 class="fw-bold mb-3">Current Gallery Images</h6>
+                        <div class="row g-3" id="admin_gallery_grid">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Messages Inbox -->
+            <div class="col-lg-12">
+                <div class="card admin-card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 pt-4 pb-0 px-4 d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold mb-0" style="color:#10b981;"><i class="fas fa-envelope-open-text me-2"></i> Contact Messages <span class="badge bg-danger ms-2" id="msg_unread_badge" style="display:none;"></span></h5>
+                        <button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="loadMessages()"><i class="fas fa-sync-alt me-1"></i> Refresh</button>
+                    </div>
+                    <div class="card-body p-4">
+                        <div id="messages_list">
+                            <p class="text-muted text-center">Loading messages...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admissions Inbox -->
+            <div class="col-lg-12">
+                <div class="card admin-card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 pt-4 pb-0 px-4 d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold mb-0" style="color:#f59e0b;"><i class="fas fa-user-graduate me-2"></i> Admission Applications <span class="badge bg-danger ms-2" id="adm_unread_badge" style="display:none;"></span></h5>
+                        <button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="loadAdmissions()"><i class="fas fa-sync-alt me-1"></i> Refresh</button>
+                    </div>
+                    <div class="card-body p-4">
+                        <div id="admissions_list">
+                            <p class="text-muted text-center">Loading applications...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Notification Offcanvas Panel -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="notifPanel" aria-labelledby="notifPanelLabel">
+        <div class="offcanvas-header" style="background:#1e3a5f; color:white;">
+            <h5 class="offcanvas-title" id="notifPanelLabel"><i class="fas fa-bell me-2"></i> Notifications</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body p-0">
+            <div class="p-3 border-bottom">
+                <small class="text-muted">New submissions from Contact and Admission forms appear here.</small>
+            </div>
+            <ul class="list-group list-group-flush" id="notif_list">
+                <li class="list-group-item text-center text-muted py-4">Loading...</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/admin.js"></script>
+    <script>
+        let deferredInstallPrompt = null;
+
+        // Register Admin Service Worker (PWA)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/admin-sw.js', {scope: '/'})
+                .then(reg => {
+                    console.log('Admin SW registered:', reg.scope);
+                    setupPushNotifications(reg);
+                })
+                .catch(err => console.warn('Admin SW registration failed:', err));
+        }
+
+        // Capture PWA Install Prompt
+        window.addEventListener('beforeinstallprompt', e => {
+            e.preventDefault();
+            deferredInstallPrompt = e;
+            const installBtn = document.getElementById('installBtn');
+            if (installBtn) installBtn.classList.remove('d-none');
+        });
+
+        function installPWA() {
+            if (deferredInstallPrompt) {
+                deferredInstallPrompt.prompt();
+                deferredInstallPrompt.userChoice.then(choice => {
+                    deferredInstallPrompt = null;
+                    const installBtn = document.getElementById('installBtn');
+                    if (installBtn) installBtn.classList.add('d-none');
+                });
+            }
+        }
+
+        // Setup Push Notifications
+        async function setupPushNotifications(swReg) {
+            if (!('PushManager' in window)) return;
+            try {
+                const keyRes = await fetch('/api/vapid-public-key');
+                const keyData = await keyRes.json();
+                const publicKey = keyData.publicKey;
+
+                // Check permission
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') return;
+
+                // Subscribe
+                const sub = await swReg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(publicKey)
+                });
+
+                // Send subscription to server
+                await fetch('/api/subscribe', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({subscription: sub.toJSON()})
+                });
+                console.log('Push subscription successful!');
+            } catch(e) {
+                console.warn('Push setup failed:', e);
+            }
+        }
+
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+        }
+
+        // Open notification panel and load data
+        function openNotifPanel() {
+            const panel = new bootstrap.Offcanvas(document.getElementById('notifPanel'));
+            panel.show();
+            loadNotifPanel();
+        }
+
+        window.onload = function() {
+            loadDashboardData();
+            loadMessages();
+            loadAdmissions();
+            pollNotifications();
+        };
+
+        // Poll every 30 seconds for new notifications
+        function pollNotifications() {
+            fetchNotificationCount();
+            setInterval(fetchNotificationCount, 30000);
+        }
+    </script>
+</body>
+</html>

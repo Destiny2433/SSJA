@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pay School Fees - Sts. Joachim and Anne Catholic School</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/x-icon" href="images/logo.png">
+</head>
+<body>
+    <header class="sticky-top">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white">
+            <div class="container">
+                <a class="navbar-brand" href="index.html">
+                    <img src="images/logo.png" alt="School Logo" height="50">
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                        <li class="nav-item"><a class="nav-link" href="about.html">About Us</a></li>
+                        <li class="nav-item"><a class="nav-link" href="academics.html">Academics</a></li>
+                        <li class="nav-item"><a class="nav-link" href="admissions.html">Admissions</a></li>
+                        <li class="nav-item"><a class="nav-link" href="admission-form.html">Admission Form</a></li>
+                        <li class="nav-item"><a class="nav-link" href="pay-fees.html">Pay Fees</a></li>
+                        <li class="nav-item"><a class="nav-link" href="gallery.html">Gallery</a></li>
+                        <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
+                        <li class="nav-item"><a class="nav-link" href="https://schoolos.osartech.com.ng/" target="_blank">Portal</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero d-flex align-items-center justify-content-center" style="height: 40vh; background: linear-gradient(135deg, var(--primary-color), rgba(0, 51, 102, 0.8)), url('images/hero-bg.jpg') center/cover; position: relative;">
+        <div class="container text-center text-white position-relative" style="z-index: 2;">
+            <h1 class="display-4 fw-bold">Pay School Fees</h1>
+            <p class="lead">Secure online fee payment via Paystack</p>
+        </div>
+    </section>
+
+    <!-- Payment Form Section -->
+    <section class="py-5" style="background: var(--light-bg); min-height: 50vh;">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card shadow-lg border-0" style="border-radius: 20px; overflow: hidden;">
+                        <div class="card-header text-center py-4" style="background: linear-gradient(135deg, #09A5DB, #077B9E);">
+                            <h3 class="mb-0 text-white"><i class="fas fa-credit-card me-2"></i>Secure Payment Portal</h3>
+                        </div>
+                        <div class="card-body p-4 p-md-5">
+                            <form id="paymentForm" onsubmit="payWithPaystack(event)">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="first-name" class="form-label fw-bold">Student First Name</label>
+                                        <input type="text" class="form-control" id="first-name" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="last-name" class="form-label fw-bold">Student Last Name</label>
+                                        <input type="text" class="form-control" id="last-name" required>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <label for="email-address" class="form-label fw-bold">Parent/Guardian Email Address</label>
+                                        <input type="email" class="form-control" id="email-address" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="term" class="form-label fw-bold">Term/Session</label>
+                                        <select id="term" class="form-select" required>
+                                            <option value="" selected disabled>Select Term</option>
+                                            <option value="first-term">First Term</option>
+                                            <option value="second-term">Second Term</option>
+                                            <option value="third-term">Third Term</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="amount" class="form-label fw-bold">Amount to Pay (NGN)</label>
+                                        <input type="number" class="form-control" id="amount" placeholder="Enter amount" required>
+                                    </div>
+                                </div>
+                                <div class="mt-5 text-center">
+                                    <button type="submit" class="btn btn-primary btn-lg px-5 py-3 shadow-sm text-white fw-bold" style="border-radius: 30px; font-size: 1.1rem; width: 100%; max-width: 400px; background: #09A5DB; border: none; text-transform: uppercase; letter-spacing: 1px;">
+                                        <i class="fas fa-lock me-2"></i>Pay Now
+                                    </button>
+                                </div>
+                            </form>
+                            <div class="text-center mt-4">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+            <footer class="bg-dark text-white py-5 mt-auto">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5 class="mb-3 text-uppercase" style="color: var(--secondary-color);">Sts. Joachim and Anne</h5>
+                    <p class="small text-light" style="opacity: 0.8;">Nurturing Faith, Excellence, and Community. Providing holistic education that inspires students to achieve their full potential.</p>
+                </div>
+                <div class="col-md-2 mb-4 mb-md-0">
+                    <h5 class="mb-3 text-uppercase" style="color: var(--secondary-color);">Quick Links</h5>
+                    <ul class="list-unstyled small">
+                        <li class="mb-2"><a href="index.html" class="text-light text-decoration-none" style="opacity: 0.8;">Home</a></li>
+                        <li class="mb-2"><a href="about.html" class="text-light text-decoration-none" style="opacity: 0.8;">About Us</a></li>
+                        <li class="mb-2"><a href="admissions.html" class="text-light text-decoration-none" style="opacity: 0.8;">Admissions</a></li>
+                        <li class="mb-0"><a href="contact.html" class="text-light text-decoration-none" style="opacity: 0.8;">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <h5 class="mb-3 text-uppercase" style="color: var(--secondary-color);">Contact Us</h5>
+                    <ul class="list-unstyled small text-light" style="opacity: 0.8;">
+                        <li class="mb-2"><i class="fas fa-map-marker-alt me-2"></i>412 Road, Gowon Estate, Lagos</li>
+                        <li class="mb-2"><i class="fas fa-phone me-2"></i>+234 123 456 7890</li>
+                        <li class="mb-0"><i class="fas fa-envelope me-2"></i>info@sjacs.edu.ng</li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5 class="mb-3 text-uppercase" style="color: var(--secondary-color);">Follow Us</h5>
+                    <div class="d-flex gap-3 mb-3">
+                        <a href="#" class="text-light text-decoration-none" style="opacity: 0.8; font-size: 1.2rem;"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-light text-decoration-none" style="opacity: 0.8; font-size: 1.2rem;"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-light text-decoration-none" style="opacity: 0.8; font-size: 1.2rem;"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-4" style="border-color: rgba(255,255,255,0.2);">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start small text-light" style="opacity: 0.8;">
+                    &copy; 2026 Sts. Joachim and Anne Catholic School. All Rights Reserved.
+                </div>
+                <div class="col-md-6 text-center text-md-end small text-light mt-3 mt-md-0" style="opacity: 0.8;">
+                    Made with <i class="fas fa-heart text-danger heartbeat"></i> by <a href="https://bit.ly/HiveryTech" target="_blank" class="text-decoration-none fw-bold" style="color: var(--secondary-color);">HiveryTech LTD</a> in conjunction with <a href="https://osartech.onrender.com/" target="_blank" class="text-decoration-none fw-bold" style="color: var(--secondary-color);">OsarTech</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+
+        function payWithPaystack(e) {
+            e.preventDefault();
+            
+            // Using your live Paystack public key
+            const publicKey = "pk_live_488f26bb8577fa01cb806e72930cff25c98e1950";
+            
+            const email = document.getElementById("email-address").value;
+            const amount = document.getElementById("amount").value * 100; // Paystack expects amount in kobo
+            const firstName = document.getElementById("first-name").value;
+            const lastName = document.getElementById("last-name").value;
+            const term = document.getElementById("term").value;
+
+            let handler = PaystackPop.setup({
+                key: publicKey, 
+                email: email,
+                amount: amount,
+                firstname: firstName,
+                lastname: lastName,
+                metadata: {
+                    custom_fields: [
+                        {
+                            display_name: "Term",
+                            variable_name: "term",
+                            value: term
+                        }
+                    ]
+                },
+                onClose: function(){
+                    alert('Payment cancelled.');
+                },
+                callback: function(response){
+                    let message = 'Payment complete! Reference: ' + response.reference;
+                    alert(message);
+                    // You can also redirect to a success page here or verify the transaction on your backend
+                    window.location.href = "index.html";
+                }
+            });
+
+            handler.openIframe();
+        }
+    </script>
+</body>
+</html>
