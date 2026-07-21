@@ -1,4 +1,33 @@
 // Admin Frontend Logic
+// Preloader Logic
+document.addEventListener('DOMContentLoaded', () => {
+    const preloader = document.createElement('div');
+    preloader.id = 'preloader';
+    preloader.innerHTML = `
+        <div class="loader-container">
+            <div class="loader-circle">
+                <img src="images/logo.png" alt="School Logo" class="loader-logo">
+            </div>
+            <div class="loader-arcs">
+                <div class="arc arc1"></div>
+                <div class="arc arc2"></div>
+                <div class="arc arc3"></div>
+            </div>
+        </div>
+        <div class="loader-text">Loading Sts. Joachim and Anne Catholic School...</div>
+    `;
+    document.body.prepend(preloader);
+});
+
+window.addEventListener('load', () => {
+    const preloader = document.getElementById('preloader');
+    if (preloader) {
+        preloader.classList.add('hidden');
+        setTimeout(() => {
+            preloader.remove();
+        }, 500); // Wait for transition
+    }
+});
 
 // Handle Login
 const loginForm = document.getElementById('loginForm');

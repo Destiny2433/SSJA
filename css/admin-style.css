@@ -23,6 +23,108 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
+/* Preloader Styles */
+#preloader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #f4f6f9;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+#preloader.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.loader-container {
+    position: relative;
+    width: 220px;
+    height: 220px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.loader-circle {
+    width: 120px;
+    height: 120px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    z-index: 2;
+}
+
+.loader-logo {
+    width: 80px;
+    height: auto;
+}
+
+.loader-arcs {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.arc {
+    position: absolute;
+    border-radius: 50%;
+    border: 4px solid transparent;
+}
+
+.arc1 {
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    border-top-color: #003366;
+    border-right-color: #003366;
+    animation: spin 2s linear infinite;
+}
+
+.arc2 {
+    width: 85%;
+    height: 85%;
+    top: 7.5%;
+    left: 7.5%;
+    border-bottom-color: #008080;
+    border-left-color: #008080;
+    animation: spin 1.5s linear infinite reverse;
+}
+
+.arc3 {
+    width: 115%;
+    height: 115%;
+    top: -7.5%;
+    left: -7.5%;
+    border-top-color: #0056b3;
+    animation: spin 3s linear infinite;
+}
+
+.loader-text {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #003366;
+    letter-spacing: 1px;
+    text-align: center;
+    padding: 0 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
 
 /* Login Page Specifics */
 .admin-login-body {

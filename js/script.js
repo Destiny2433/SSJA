@@ -142,6 +142,58 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
+// Growth Panel Animation - Animate bars from 0% to target percentage
+document.addEventListener('DOMContentLoaded', function() {
+    const growthPanel = document.querySelector('.growth-panel');
+    if (!growthPanel) return;
+
+    const animateGrowthBars = () => {
+        const fills = growthPanel.querySelectorAll('.growth-fill');
+        const percents = growthPanel.querySelectorAll('.growth-percent');
+        
+        fills.forEach((fill) => {
+            const targetWidth = parseInt(fill.getAttribute('data-width'));
+            // Reset to 0 first
+            fill.style.width = '0%';
+            
+            // Animate the width (CSS transition handles the animation)
+            setTimeout(() => {
+                fill.style.width = targetWidth + '%';
+            }, 100);
+        });
+        
+        percents.forEach((percent, index) => {
+            const target = parseInt(percent.getAttribute('data-target'));
+            let current = 0;
+            percent.innerText = '0%';
+            
+            // Stagger the counter start slightly after bar animation
+            setTimeout(() => {
+                const interval = setInterval(() => {
+                    if (current < target) {
+                        current++;
+                        percent.innerText = current + '%';
+                    } else {
+                        clearInterval(interval);
+                    }
+                }, 25);
+            }, 300 + (index * 100));
+        });
+    };
+
+    // Use IntersectionObserver to trigger once when growth panel is visible
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                animateGrowthBars();
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.3 });
+    
+    observer.observe(growthPanel);
+});
+
 // Navbar active state
 const navLinks = document.querySelectorAll('.nav-link');
 const currentPath = window.location.pathname.split('/').pop();
@@ -171,7 +223,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const heroCarousel = document.querySelector('#heroCarousel');
     if (heroCarousel) {
         const carousel = new bootstrap.Carousel(heroCarousel, {
-            interval: 3500, // 3.5 seconds
+            interval: 5000, // 3.5 seconds
             ride: 'carousel'
         });
     }

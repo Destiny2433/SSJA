@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.env
+*.db
+
+# Environment
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads (keep folder, ignore files)
+images/uploads/*
+!images/uploads/.gitkeep
+
+# Config
+.env
+*.env.local
+

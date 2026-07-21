@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gallery - Sts. Joachim and Anne Catholic School</title>
-    <meta name="description" content="Explore photos and videos from events, classrooms, sports, and more at Sts. Joachim and Anne Catholic School.">
+    <title>School Anthem - Sts. Joachim and Anne Catholic School</title>
+    <meta name="description" content="Listen to and read the School Anthem of Sts. Joachim and Anne Catholic School.">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
@@ -24,13 +24,14 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav ms-auto">
-                        <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
-                        <li class="nav-item"><a class="nav-link" href="about">About Us</a></li>
-                        <li class="nav-item"><a class="nav-link" href="academics">Academics</a></li>
-                        <li class="nav-item"><a class="nav-link" href="admissions">Admissions</a></li>
-                        <li class="nav-item"><a class="nav-link" href="admission-form">Admission Form</a></li>
-                        <li class="nav-item"><a class="nav-link active" href="gallery">Gallery</a></li>
-                        <li class="nav-item"><a class="nav-link" href="contact">Contact</a></li>
+                        <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                        <li class="nav-item"><a class="nav-link" href="about.html">About Us</a></li>
+                        <li class="nav-item"><a class="nav-link" href="academics.html">Academics</a></li>
+                        <li class="nav-item"><a class="nav-link" href="admissions.html">Admissions</a></li>
+                        <li class="nav-item"><a class="nav-link" href="admission-form.html">Admission Form</a></li>
+                        <li class="nav-item"><a class="nav-link" href="pay-fees.html">Fees Portal</a></li>
+                        <li class="nav-item"><a class="nav-link" href="gallery.html">Gallery</a></li>
+                        <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
                         <li class="nav-item"><a class="nav-link" href="https://schoolos.osartech.com.ng/" target="_blank">Portal</a></li>
                     </ul>
                 </div>
@@ -38,84 +39,48 @@
         </nav>
     </header>
 
-    <section class="py-5">
-        <div class="container">
-            <h1 class="text-center mb-5" data-aos="fade-up">Gallery</h1>
-
-            <!-- Filter Buttons -->
-            <div class="text-center mb-4" data-aos="fade-up">
-                <button class="btn btn-outline-primary filter-btn active me-2" onclick="filterGallery('all')">All</button>
-                <button class="btn btn-outline-primary filter-btn me-2" onclick="filterGallery('events')">Events</button>
-                <button class="btn btn-outline-primary filter-btn me-2" onclick="filterGallery('classrooms')">Classrooms</button>
-                <button class="btn btn-outline-primary filter-btn me-2" onclick="filterGallery('sports')">Sports</button>
-                <button class="btn btn-outline-primary filter-btn" onclick="filterGallery('mass')">Mass</button>
-            </div>
-
-            <!-- Gallery Grid -->
-            <div id="dynamic-gallery-grid" class="gallery-grid">
-                <!-- Populated dynamically via JS -->
-            </div>
+    <section class="hero d-flex align-items-center" style="min-height: 40vh;">
+        <div class="container text-white position-relative">
+            <h1 class="display-4 fw-bold" data-aos="fade-up">School Anthem</h1>
+            <p class="lead" data-aos="fade-up" data-aos-delay="200">A song of identity, faith, and excellence.</p>
         </div>
     </section>
 
-    <!-- Video Section -->
-    <section class="py-5 bg-light">
+    <section class="py-5">
         <div class="container">
-            <h2 class="text-center mb-5" data-aos="fade-up">School Tour</h2>
-            <div class="row justify-content-center">
-                <div class="col-lg-8" data-aos="fade-up">
-                    <div class="ratio ratio-16x9">
-                        <iframe src="https://youtu.be/lfND6fqcppQ?si=e-JQ6J6QhXENdX5B" title="School Tour Video" allowfullscreen></iframe>
+            <div class="row">
+                <div class="col-lg-6 mb-4" data-aos="fade-right">
+                    <div class="p-4 bg-light rounded-4 h-100">
+                        <h3 class="mb-3">Listen</h3>
+                        <div class="ratio ratio-16x9">
+                            <iframe
+                                title="School Anthem"
+                                src="https://www.youtube.com/embed/VIDEO_ID_HERE"
+                                allowfullscreen>
+                            </iframe>
+                        </div>
+                        <p class="text-muted mt-3 mb-0">Replace VIDEO_ID_HERE with your anthem video link.</p>
+                    </div>
+                </div>
+                <div class="col-lg-6" data-aos="fade-left">
+                    <div class="p-4 bg-light rounded-4 h-100">
+                        <h3 class="mb-3">Lyrics</h3>
+                        <p class="mb-2"><strong>Verse 1</strong></p>
+                        <p class="text-muted">[Add anthem lyrics here]</p>
+                        <hr>
+                        <p class="mb-2"><strong>Chorus</strong></p>
+                        <p class="text-muted">[Add anthem lyrics here]</p>
+                        <hr>
+                        <p class="mb-2"><strong>Verse 2</strong></p>
+                        <p class="text-muted">[Add anthem lyrics here]</p>
+                        <p class="text-muted mb-0">Tip: Update this page once the official lyrics are ready.</p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Lightbox Styles (added via JS) -->
-    <style>
-        .lightbox {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.9);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-        }
-        .lightbox-content {
-            max-width: 90%;
-            max-height: 90%;
-            position: relative;
-        }
-        .lightbox-content img {
-            max-width: 100%;
-            max-height: 100%;
-        }
-        .lightbox-caption {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 10px;
-            text-align: center;
-        }
-        .lightbox-close {
-            position: absolute;
-            top: -40px;
-            right: 0;
-            color: white;
-            font-size: 30px;
-            cursor: pointer;
-        }
-    </style>
-
-               <footer class="bg-dark text-white py-5 mt-auto">
+    <footer class="bg-dark text-white py-5 mt-auto">
         <div class="container">
             <div class="row">
                 <div class="col-md-4 mb-4 mb-md-0">
@@ -150,26 +115,29 @@
             </div>
             <hr class="my-4" style="border-color: rgba(255,255,255,0.2);">
             <div class="row align-items-center">
-                <div class="col-md-6 text-center text-md-start small text-light" style="opacity: 0.8;">
-                    &copy; 2026 Sts. Joachim and Anne Catholic School. All Rights Reserved.
-                </div>
+                <div class="col-md-6 text-center text-md-start small text-light" style="opacity: 0.8;">&copy; 2026 Sts. Joachim and Anne Catholic School. All Rights Reserved.</div>
                 <div class="col-md-6 text-center text-md-end small text-light mt-3 mt-md-0" style="opacity: 0.8;">
                     Made with <i class="fas fa-heart text-danger heartbeat"></i> by <a href="https://bit.ly/HiveryTech" target="_blank" class="text-decoration-none fw-bold" style="color: var(--secondary-color);">HiveryTech LTD</a> in conjunction with <a href="https://osartech.onrender.com/" target="_blank" class="text-decoration-none fw-bold" style="color: var(--secondary-color);">OsarTech</a>
                 </div>
             </div>
         </div>
     </footer>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({ duration: 800, once: true });
+    </script>
     <script src="js/script.js"></script>
-     <script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js")
-      .then(reg => console.log("Service Worker Registered"))
-      .catch(err => console.log(err));
-  });
-}
-</script>
+    <script>
+        if ("serviceWorker" in navigator) {
+          window.addEventListener("load", () => {
+            navigator.serviceWorker.register("/sw.js")
+              .then(reg => console.log("Service Worker Registered"))
+              .catch(err => console.log(err));
+          });
+        }
+    </script>
 </body>
 </html>
+

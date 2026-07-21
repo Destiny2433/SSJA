@@ -4,12 +4,12 @@ import time
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from flask import Flask, request, jsonify, send_from_directory, session
+from flask import Flask, request, jsonify, send_from_directory, session, redirect
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.secret_key = 'joacim_super_secret_key'
+app.secret_key = os.getenv('SECRET_KEY', 'joacim_super_secret_key')
 
 UPLOAD_FOLDER = 'images/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -167,9 +167,17 @@ def send_push_notification(title, body, url='/admin-dashboard'):
 
 # --- Static File Routes ---
 PAGES = [
-    'index', 'about', 'academics', 'admissions', 'admission-form',
-    'pay-fees', 'gallery', 'contact', 'admin', 'admin-dashboard'
+    'index', 'about', 'academics',
+
+    'education-facilities', 'education-staff', 'education-anthem',
+    'disciplinary-measures', 'school-rules-regulations',
+
+    'academics-calendar', 'academics-curriculum', 'academics-jss-subjects',
+    'academics-senior-secondary', 'academics-extra-curricular', 'academics-fees',
+
+    'admissions', 'admission-form', 'pay-fees', 'gallery', 'contact', 'admin', 'admin-dashboard'
 ]
+
 
 
 @app.route('/')
@@ -179,8 +187,15 @@ def index():
 
 @app.route('/<page>')
 def serve_page(page):
+    if page == 'admin-dashboard' and not session.get('admin_logged_in'):
+        return redirect('/admin')
+
     if page in PAGES:
         return send_from_directory('.', f'{page}.html')
+
+    if page == 'admin-dashboard.html' and not session.get('admin_logged_in'):
+        return redirect('/admin')
+
     if page.endswith(('.py', '.db', '.md')) or page.startswith('.'):
         return "Forbidden", 403
     return send_from_directory('.', page)
@@ -188,6 +203,9 @@ def serve_page(page):
 
 @app.route('/<path:filename>')
 def serve_static(filename):
+    if filename == 'admin-dashboard.html' and not session.get('admin_logged_in'):
+        return redirect('/admin')
+
     if filename.endswith(('.py', '.db', '.md')) or filename.startswith('.'):
         return "Forbidden", 403
     return send_from_directory('.', filename)
@@ -525,5 +543,5 @@ def get_notifications():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
-
+    port = int(os.getenv('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)

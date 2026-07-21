@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pay School Fees - Sts. Joachim and Anne Catholic School</title>
+    <title>School Staff - Sts. Joachim and Anne Catholic School</title>
+    <meta name="description" content="Meet the dedicated staff at Sts. Joachim and Anne Catholic School.">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
@@ -28,7 +29,7 @@
                         <li class="nav-item"><a class="nav-link" href="academics.html">Academics</a></li>
                         <li class="nav-item"><a class="nav-link" href="admissions.html">Admissions</a></li>
                         <li class="nav-item"><a class="nav-link" href="admission-form.html">Admission Form</a></li>
-                        <li class="nav-item"><a class="nav-link" href="pay-fees.html">Pay Fees</a></li>
+                        <li class="nav-item"><a class="nav-link" href="pay-fees.html">Fees Portal</a></li>
                         <li class="nav-item"><a class="nav-link" href="gallery.html">Gallery</a></li>
                         <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
                         <li class="nav-item"><a class="nav-link" href="https://schoolos.osartech.com.ng/" target="_blank">Portal</a></li>
@@ -38,69 +39,62 @@
         </nav>
     </header>
 
-    <!-- Hero Section -->
-    <section class="hero d-flex align-items-center justify-content-center" style="height: 40vh; background: linear-gradient(135deg, var(--primary-color), rgba(0, 51, 102, 0.8)), url('images/hero-bg.jpg') center/cover; position: relative;">
-        <div class="container text-center text-white position-relative" style="z-index: 2;">
-            <h1 class="display-4 fw-bold">Pay School Fees</h1>
-            <p class="lead">Secure online fee payment via Paystack</p>
+    <section class="hero d-flex align-items-center" style="min-height: 40vh;">
+        <div class="container text-white position-relative">
+            <h1 class="display-4 fw-bold" data-aos="fade-up">School Staff</h1>
+            <p class="lead" data-aos="fade-up" data-aos-delay="200">Committed educators and support staff working together to guide every learner.</p>
         </div>
     </section>
 
-    <!-- Payment Form Section -->
-    <section class="py-5" style="background: var(--light-bg); min-height: 50vh;">
+    <section class="py-5">
         <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-lg-8">
-                    <div class="card shadow-lg border-0" style="border-radius: 20px; overflow: hidden;">
-                        <div class="card-header text-center py-4" style="background: linear-gradient(135deg, #09A5DB, #077B9E);">
-                            <h3 class="mb-0 text-white"><i class="fas fa-credit-card me-2"></i>Secure Payment Portal</h3>
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="mb-2">Our Team</h2>
+                <p class="text-muted mb-0">Teachers, administrators, and support personnel dedicated to excellence and character formation.</p>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-4" data-aos="fade-up">
+                    <div class="card h-100 text-center">
+                        <div class="card-body p-4">
+                            <img src="images/logo.png" alt="Staff" class="rounded-circle mb-3" style="width: 120px; height: 120px; object-fit: cover;">
+                            <h4 class="mt-2">School Administration</h4>
+                            <p class="text-muted">Leadership that supports faith, discipline, and academic progress.</p>
                         </div>
-                        <div class="card-body p-4 p-md-5">
-                            <form id="paymentForm" onsubmit="payWithPaystack(event)">
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label for="first-name" class="form-label fw-bold">Student First Name</label>
-                                        <input type="text" class="form-control" id="first-name" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="last-name" class="form-label fw-bold">Student Last Name</label>
-                                        <input type="text" class="form-control" id="last-name" required>
-                                    </div>
-                                    <div class="col-md-12">
-                                        <label for="email-address" class="form-label fw-bold">Parent/Guardian Email Address</label>
-                                        <input type="email" class="form-control" id="email-address" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="term" class="form-label fw-bold">Term/Session</label>
-                                        <select id="term" class="form-select" required>
-                                            <option value="" selected disabled>Select Term</option>
-                                            <option value="first-term">First Term</option>
-                                            <option value="second-term">Second Term</option>
-                                            <option value="third-term">Third Term</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="amount" class="form-label fw-bold">Amount to Pay (NGN)</label>
-                                        <input type="number" class="form-control" id="amount" placeholder="Enter amount" required>
-                                    </div>
-                                </div>
-                                <div class="mt-5 text-center">
-                                    <button type="submit" class="btn btn-primary btn-lg px-5 py-3 shadow-sm text-white fw-bold" style="border-radius: 30px; font-size: 1.1rem; width: 100%; max-width: 400px; background: #09A5DB; border: none; text-transform: uppercase; letter-spacing: 1px;">
-                                        <i class="fas fa-lock me-2"></i>Pay Now
-                                    </button>
-                                </div>
-                            </form>
-                            <div class="text-center mt-4">
-                            </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4" data-aos="fade-up" data-aos-delay="100">
+                    <div class="card h-100 text-center">
+                        <div class="card-body p-4">
+                            <img src="images/logo.png" alt="Teacher" class="rounded-circle mb-3" style="width: 120px; height: 120px; object-fit: cover;">
+                            <h4 class="mt-2">Teachers</h4>
+                            <p class="text-muted">Highly motivated educators committed to effective learning and mentorship.</p>
                         </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4" data-aos="fade-up" data-aos-delay="200">
+                    <div class="card h-100 text-center">
+                        <div class="card-body p-4">
+                            <img src="images/logo.png" alt="Support" class="rounded-circle mb-3" style="width: 120px; height: 120px; object-fit: cover;">
+                            <h4 class="mt-2">Support Staff</h4>
+                            <p class="text-muted">Administrative and support services that help the school run smoothly.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-2">
+                <div class="col-lg-12" data-aos="fade-up">
+                    <div class="p-4 bg-light rounded-4">
+                        <h3 class="mb-3">A Culture of Care</h3>
+                        <p class="mb-0">We believe learning thrives when students are supported academically, spiritually, and emotionally. Our staff works with pupils and parents to build confidence, discipline, and lifelong values.</p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Footer -->
-            <footer class="bg-dark text-white py-5 mt-auto">
+    <footer class="bg-dark text-white py-5 mt-auto">
         <div class="container">
             <div class="row">
                 <div class="col-md-4 mb-4 mb-md-0">
@@ -145,50 +139,21 @@
         </div>
     </footer>
 
-    <script src="https://js.paystack.co/v1/inline.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
-
-        function payWithPaystack(e) {
-            e.preventDefault();
-            
-            // Using your live Paystack public key
-            const publicKey = "pk_live_488f26bb8577fa01cb806e72930cff25c98e1950";
-            
-            const email = document.getElementById("email-address").value;
-            const amount = document.getElementById("amount").value * 100; // Paystack expects amount in kobo
-            const firstName = document.getElementById("first-name").value;
-            const lastName = document.getElementById("last-name").value;
-            const term = document.getElementById("term").value;
-
-            let handler = PaystackPop.setup({
-                key: publicKey, 
-                email: email,
-                amount: amount,
-                firstname: firstName,
-                lastname: lastName,
-                metadata: {
-                    custom_fields: [
-                        {
-                            display_name: "Term",
-                            variable_name: "term",
-                            value: term
-                        }
-                    ]
-                },
-                onClose: function(){
-                    alert('Payment cancelled.');
-                },
-                callback: function(response){
-                    let message = 'Payment complete! Reference: ' + response.reference;
-                    alert(message);
-                    // You can also redirect to a success page here or verify the transaction on your backend
-                    window.location.href = "index.html";
-                }
-            });
-
-            handler.openIframe();
+        AOS.init({ duration: 800, once: true });
+    </script>
+    <script src="js/script.js"></script>
+    <script>
+        if ("serviceWorker" in navigator) {
+          window.addEventListener("load", () => {
+            navigator.serviceWorker.register("/sw.js")
+              .then(reg => console.log("Service Worker Registered"))
+              .catch(err => console.log(err));
+          });
         }
     </script>
 </body>
 </html>
+
