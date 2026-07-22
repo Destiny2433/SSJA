@@ -1,4 +1,4 @@
-// Preloader Logic
+// Preloader Logic - Hide quickly after DOM ready, don't wait for all images
 document.addEventListener('DOMContentLoaded', () => {
     const preloader = document.createElement('div');
     preloader.id = 'preloader';
@@ -11,26 +11,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="arc arc1"></div>
                 <div class="arc arc2"></div>
                 <div class="arc arc3"></div>
-            </div>
         </div>
         <div class="loader-text">Loading Sts. Joachim and Anne Catholic School...</div>
     `;
     document.body.prepend(preloader);
+    
+    // Hide preloader after max 800ms - don't wait for all images to load
+    setTimeout(() => {
+        const p = document.getElementById('preloader');
+        if (p) {
+            p.classList.add('hidden');
+            setTimeout(() => { if (p.parentNode) p.remove(); }, 300);
+        }
+    }, 800);
 });
 
+// Fallback: hide on window load too
 window.addEventListener('load', () => {
     const preloader = document.getElementById('preloader');
     if (preloader) {
         preloader.classList.add('hidden');
         setTimeout(() => {
-            preloader.remove();
-        }, 500); // Wait for transition
+            if (preloader.parentNode) preloader.remove();
+        }, 300);
     }
 });
 
-// Initialize AOS (Animate On Scroll)
+// Initialize AOS (Animate On Scroll) - with shorter duration
 AOS.init({
-    duration: 1000,
+    duration: 600,
     once: true,
     offset: 100
 });
@@ -102,7 +111,6 @@ function openLightbox(src, caption) {
             <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
             <img src="${src}" alt="${caption}">
             <div class="lightbox-caption">${caption}</div>
-        </div>
     `;
     document.body.appendChild(lightbox);
 
@@ -214,16 +222,12 @@ if (contactForm) {
     });
 }
 
-// Sample users data
-// Portal login form
-
-
-// Auto-slide hero carousel every  seconds
+// Auto-slide hero carousel
 document.addEventListener('DOMContentLoaded', function() {
     const heroCarousel = document.querySelector('#heroCarousel');
     if (heroCarousel) {
         const carousel = new bootstrap.Carousel(heroCarousel, {
-            interval: 5000, // 3.5 seconds
+            interval: 5000,
             ride: 'carousel'
         });
     }
@@ -237,8 +241,10 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Fetch and Inject Dynamic Content
+// Fetch and Inject Dynamic Content (non-blocking with timeout)
 document.addEventListener('DOMContentLoaded', async function() {
+    // Delay API call slightly so page renders first
+    await new Promise(r => setTimeout(r, 200));
     try {
         const response = await fetch('/api/content');
         if (response.ok) {
@@ -299,7 +305,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                                     <h5>${item.title || 'Gallery Image'}</h5>
                                     <p>${item.category}</p>
                                 </div>
-                            </div>
                         `;
                     });
                 }

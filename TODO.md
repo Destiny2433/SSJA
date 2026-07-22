@@ -1,9 +1,9 @@
-# Growth Panel Animation Task
+# Admission Form Fix & Enhancement Task
 
 ## Steps
-- [x] Step 1: Plan approved
-- [x] Step 2: Update `index.html` - Set growth bars/percentages to start from 0, add data attributes
-- [x] Step 3: Update `css/style.css` - Replace green colors with blue colors in growth panel
-- [x] Step 4: Update `js/script.js` - Add IntersectionObserver-based animation for growth bars
-- [x] Step 5: Verify changes - COMPLETE
-
+- [ ] Step 1: Plan approved - COMPLETE
+- [ ] Step 2: Update database schema in `app.py` - Add all missing columns to admissions table + passport_photo_path
+- [ ] Step 3: Update backend API in `app.py` - Update POST `/api/admissions` to accept all fields & handle passport upload; update GET to return all fields
+- [ ] Step 4: Fix `admission-form.html` - Fix field name attributes, fix duplicate gender select, update JS form collector to map all fields, add passport upload to FormData, fix print CSS for single-page fit
+- [ ] Step 5: Update `admin-dashboard.html` - Expand admissions card to show all form fields
+- [ ] Step 6: Update `js/admin.js` - Update loadAdmissions() to display all admission fields

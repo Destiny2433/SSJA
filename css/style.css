@@ -60,7 +60,6 @@ h1, h2, h3, h4, h5, h6 {
     background-size: cover;
     background-position: center;
     height: 100vh;
-    background-attachment: fixed;
 }
 
 .hero-overlay {
@@ -838,4 +837,6 @@ footer .col-md-6.text-md-end a::after {
 footer .col-md-6.text-md-end a:hover::after {
     transform: scaleX(1);
     transform-origin: bottom left;
-}
+}</｜｜DSML｜｜parameter>
+</invoke>
+</｜｜DSML｜｜tool_calls>

@@ -15,7 +15,6 @@ UPLOAD_FOLDER = 'images/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # --- PostgreSQL Config (full switch) ---
-# Use env vars if available; otherwise defaults from your prompt.
 DB_HOST = os.getenv('DB_HOST', 'dpg-d98ddbvavr4c739booh0-a.oregon-postgres.render.com')
 DB_PORT = int(os.getenv('DB_PORT', '5432'))
 DB_USER = os.getenv('DB_USER', 'ssja_database_systemdb_user')
@@ -36,7 +35,6 @@ def get_db_connection():
 
 
 # VAPID Keys for Push Notifications
-# These keys are auto-generated. Do NOT share the private key.
 VAPID_PUBLIC_KEY = "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U"
 VAPID_PRIVATE_KEY = "uycSJxLNFTqGfzxvLT1i2mTPJqB3mcZs29_mS4h6E6g"
 VAPID_CLAIMS = {"sub": "mailto:admin@sjacs.edu.ng"}
@@ -104,7 +102,22 @@ def init_postgres():
             parent_email TEXT,
             address TEXT,
             is_read INTEGER DEFAULT 0,
-            submitted_at TEXT
+            submitted_at TEXT,
+            session_term TEXT,
+            nationality TEXT,
+            student_home_address TEXT,
+            previous_school TEXT,
+            parent_relationship TEXT,
+            parent_occupation TEXT,
+            parent_home_address TEXT,
+            emergency_contact_name TEXT,
+            emergency_contact_phone TEXT,
+            emergency_contact_relationship TEXT,
+            blood_group TEXT,
+            allergies_medical_conditions TEXT,
+            parent_signature TEXT,
+            signature_date TEXT,
+            passport_photo_path TEXT
         )
         """
     )
@@ -144,7 +157,6 @@ def send_push_notification(title, body, url='/admin-dashboard'):
         subs = conn.cursor().execute(
             "SELECT subscription_json FROM push_subscriptions"
         )
-        # Fetch rows with a separate cursor to avoid mixing execute/fetchall patterns
         cur = conn.cursor()
         cur.execute("SELECT subscription_json FROM push_subscriptions")
         rows = cur.fetchall()
@@ -168,16 +180,12 @@ def send_push_notification(title, body, url='/admin-dashboard'):
 # --- Static File Routes ---
 PAGES = [
     'index', 'about', 'academics',
-
     'education-facilities', 'education-staff', 'education-anthem',
     'disciplinary-measures', 'school-rules-regulations',
-
     'academics-calendar', 'academics-curriculum', 'academics-jss-subjects',
     'academics-senior-secondary', 'academics-extra-curricular', 'academics-fees',
-
     'admissions', 'admission-form', 'pay-fees', 'gallery', 'contact', 'admin', 'admin-dashboard'
 ]
-
 
 
 @app.route('/')
@@ -249,7 +257,6 @@ def subscribe():
 
     conn = get_db_connection()
     cur = conn.cursor()
-    # PostgreSQL equivalent of INSERT OR IGNORE
     cur.execute(
         """
         INSERT INTO push_subscriptions (subscription_json)
@@ -459,9 +466,15 @@ def submit_admission():
     cur.execute(
         """
         INSERT INTO admissions
-            (student_name, date_of_birth, gender, class_applying, parent_name, parent_phone, parent_email, address, submitted_at)
+            (student_name, date_of_birth, gender, class_applying, parent_name, parent_phone, parent_email, address, submitted_at,
+             session_term, nationality, student_home_address, previous_school, parent_relationship, parent_occupation,
+             parent_home_address, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship,
+             blood_group, allergies_medical_conditions, parent_signature, signature_date, passport_photo_path)
         VALUES
-            (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            (%s, %s, %s, %s, %s, %s, %s, %s, %s,
+             %s, %s, %s, %s, %s, %s,
+             %s, %s, %s, %s,
+             %s, %s, %s, %s, %s)
         """,
         (
             data.get('student_name'),
@@ -473,6 +486,21 @@ def submit_admission():
             data.get('parent_email'),
             data.get('address'),
             timestamp,
+            data.get('session_term'),
+            data.get('nationality'),
+            data.get('student_home_address'),
+            data.get('previous_school'),
+            data.get('parent_relationship'),
+            data.get('parent_occupation'),
+            data.get('parent_home_address'),
+            data.get('emergency_contact_name'),
+            data.get('emergency_contact_phone'),
+            data.get('emergency_contact_relationship'),
+            data.get('blood_group'),
+            data.get('allergies_medical_conditions'),
+            data.get('parent_signature'),
+            data.get('signature_date'),
+            data.get('passport_photo_path'),
         ),
     )
     conn.commit()

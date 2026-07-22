@@ -1,11 +1,9 @@
 <!DOCTYPE html>
 <head>
-    <title>Admission Form</title>
-    <meta charset="UTF-8">
+    <title>Admission Form - Sts. Joachim and Anne Catholic School</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admission For - Sts. Joachim and Anne Catholic School</title>
-    <meta name="description" content="Explore our academic programs from Nursery to Secondary at Sts. Joachim and Anne Catholic School.">
+    <meta name="description" content="Apply for admission at Sts. Joachim and Anne Catholic School.">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
@@ -16,14 +14,14 @@
         @media print {
             @page {
                 size: A4 portrait;
-                margin: 0.8cm;
+                margin: 0.5cm;
             }
             body {
                 background: white !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
-                font-size: 12px !important;
-                line-height: 1.4 !important;
+                font-size: 11px !important;
+                line-height: 1.3 !important;
                 color: black !important;
             }
             .hero, header, footer, .no-print, .text-muted, .card-header {
@@ -32,6 +30,8 @@
             .py-5, section, .card-body {
                 padding: 0 !important;
                 margin: 0 !important;
+            }
+            .card {
             }
             .card {
                 border: none !important;
@@ -419,20 +419,7 @@
         });
 
         // Intercept form submission and send to local API
-        document.getElementById('admissionForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const statusBox = document.getElementById('admission_status');
-            const submitBtn = document.getElementById('admissionSubmitBtn');
-            const spinner = document.getElementById('admissionSpinner');
 
-            submitBtn.disabled = true;
-            spinner.classList.remove('d-none');
-
-            // Collect form data
-            const form = e.target;
-            const data = {
-                student_name: form.querySelector('[name="student_name"]')?.value || '',
-                date_of_birth: form.querySelector('[name="date_of_birth"]')?.value || '',
                 gender: form.querySelector('[name="gender"]')?.value || '',
                 class_applying: form.querySelector('[name="class_applying"]')?.value || '',
                 parent_name: form.querySelector('[name="parent_name"]')?.value || '',
