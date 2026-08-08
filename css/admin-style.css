@@ -233,6 +233,49 @@ body {
     transform: translateY(-1px);
 }
 
+/* Spinner Styles */
+.spinner-border {
+    animation: spinner-rotate 0.75s linear infinite;
+    border-width: 0.2em;
+}
+
+/* Login page spinner */
+#loginSpinner {
+    width: 1.2rem;
+    height: 1.2rem;
+    border-width: 0.2em;
+    border-color: #fff;
+    border-right-color: transparent;
+}
+
+/* Upload progress spinners - refined */
+.upload-progress {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    border-radius: 10px;
+    font-size: 0.85rem;
+    color: var(--primary-color);
+    font-weight: 600;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.upload-progress .spinner-border {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.15em;
+    border-color: var(--primary-color);
+    border-right-color: transparent;
+}
+
+@keyframes spinner-rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
 /* Alert Styles */
 .alert {
     border: none;
@@ -241,16 +284,54 @@ body {
     font-weight: 500;
 }
 
+.alert-success {
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    color: #065f46;
+    border-left: 4px solid var(--success-color);
+}
+
 .alert-danger {
     background-color: #fee2e2;
     color: #991b1b;
     animation: shake 0.4s ease-in-out;
+    border-left: 4px solid var(--danger-color);
 }
 
 @keyframes shake {
     0%, 100% { transform: translateX(0); }
     25% { transform: translateX(-5px); }
     75% { transform: translateX(5px); }
+}
+
+/* Delete button style for messages */
+.delete-msg-btn {
+    transition: all 0.2s ease;
+}
+
+.delete-msg-btn:hover {
+    background-color: var(--danger-color) !important;
+    color: white !important;
+    border-color: var(--danger-color) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+}
+
+/* Notification bell pulse */
+#notifBell {
+    transition: all 0.2s ease;
+}
+
+#notifBell:hover {
+    transform: scale(1.1);
+    color: var(--secondary-color) !important;
+}
+
+/* Status message styling */
+#statusMessage {
+    position: sticky;
+    top: 80px;
+    z-index: 1000;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
 /* Dashboard Body */

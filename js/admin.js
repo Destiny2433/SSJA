@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="arc arc3"></div>
             </div>
         </div>
-        <div class="loader-text">Loading Sts. Joachim and Anne Catholic School...</div>
+        <div class="loader-text">Loading SS. Joachim and Anne Catholic School...</div>
     `;
     document.body.prepend(preloader);
 });
@@ -286,21 +286,28 @@ async function loadMessages() {
         const badge = document.getElementById('msg_unread_badge');
         if (badge) { badge.textContent = unread; badge.style.display = unread > 0 ? 'inline-block' : 'none'; }
 
-        container.innerHTML = msgs.map(m => `
+        container.innerHTML = msgs.map(m => {
+            const emailHtml = m.email ? `<span class="text-muted small ms-2"><${m.email}></span>` : '';
+            const newBadge = !m.is_read ? '<span class="badge bg-success ms-2">New</span>' : '';
+            const readBtn = !m.is_read ? `<button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="markMessageRead(${m.id})">Mark as Read</button>` : '';
+            return `
             <div class="border rounded p-3 mb-3 ${m.is_read ? 'bg-white' : 'bg-light border-start border-success border-4'}">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
                         <strong>${m.name || 'Unknown'}</strong>
-                        <span class="text-muted small ms-2">&lt;${m.email || ''}&gt;</span>
-                        ${!m.is_read ? '<span class="badge bg-success ms-2">New</span>' : ''}
+                        ${emailHtml}
+                        ${newBadge}
                     </div>
                     <small class="text-muted">${m.submitted_at || ''}</small>
                 </div>
                 <div class="fw-semibold mt-1">${m.subject || 'No subject'}</div>
                 <div class="text-muted mt-1 small">${m.message || ''}</div>
-                ${!m.is_read ? `<button class="btn btn-sm btn-outline-secondary mt-2 rounded-pill" onclick="markMessageRead(${m.id})">Mark as Read</button>` : ''}
-            </div>
-        `).join('');
+                <div class="d-flex gap-2 mt-2">
+                    ${readBtn}
+                    <button class="btn btn-sm btn-outline-danger rounded-pill delete-msg-btn" onclick="deleteMessage(${m.id})"><i class="fas fa-trash-alt me-1"></i> Delete</button>
+                </div>
+            </div>`;
+        }).join('');
     } catch(e) {
         container.innerHTML = '<p class="text-danger">Error loading messages.</p>';
     }
@@ -310,6 +317,23 @@ async function markMessageRead(id) {
     await fetch('/api/messages/' + id + '/read', {method: 'POST'});
     loadMessages();
     fetchNotificationCount();
+}
+
+async function deleteMessage(id) {
+    if(!confirm("Are you sure you want to delete this message?")) return;
+    try {
+        const response = await fetch('/api/messages/' + id, { method: 'DELETE' });
+        const result = await response.json();
+        if(response.ok && result.success) {
+            showStatus('Message deleted successfully');
+            loadMessages();
+            fetchNotificationCount();
+        } else {
+            showStatus('Failed to delete message', true);
+        }
+    } catch(e) {
+        showStatus('Error deleting message', true);
+    }
 }
 
 async function loadAdmissions() {
@@ -346,7 +370,10 @@ async function loadAdmissions() {
                     <div class="col-sm-4"><b>Email:</b> ${a.parent_email || '-'}</div>
                     <div class="col-sm-12"><b>Address:</b> ${a.address || '-'}</div>
                 </div>
-                ${!a.is_read ? `<button class="btn btn-sm btn-outline-secondary mt-2 rounded-pill" onclick="markAdmissionRead(${a.id})">Mark as Read</button>` : ''}
+<div class="d-flex gap-2 mt-2">
+                    ${!a.is_read ? `<button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="markAdmissionRead(${a.id})">Mark as Read</button>` : ''}
+                    <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="downloadAdmissionPDF(${a.id})"><i class="fas fa-file-pdf me-1"></i> Download PDF</button>
+                </div>
             </div>
         `).join('');
     } catch(e) {
@@ -358,6 +385,111 @@ async function markAdmissionRead(id) {
     await fetch('/api/admissions/' + id + '/read', {method: 'POST'});
     loadAdmissions();
     fetchNotificationCount();
+}
+
+// ============================================================
+// News / Blog / Events Manager
+// ============================================================
+
+const postCatLabels = { news: 'News', blog: 'Blog', event: 'Event' };
+
+async function loadPosts() {
+    const container = document.getElementById('posts_list');
+    if (!container) return;
+    try {
+        const res = await fetch('/api/posts');
+        const data = await res.json();
+        if (!data.success) { container.innerHTML = '<p class="text-danger">Failed to load posts.</p>'; return; }
+        const posts = data.data || [];
+        if (posts.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center py-3">No posts published yet.</p>';
+            return;
+        }
+        container.innerHTML = posts.map(p => {
+            const thumb = p.image_path
+                ? `<img src="${p.image_path}" style="width:70px;height:50px;object-fit:cover;border-radius:6px;">`
+                : `<div style="width:70px;height:50px;background:#f1f3f5;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#adb5bd;"><i class="fas fa-newspaper"></i></div>`;
+            return `
+            <div class="border rounded p-3 mb-3 bg-white d-flex gap-3 align-items-start">
+                ${thumb}
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>${p.title || 'Untitled'}</strong>
+                            <span class="badge bg-danger ms-2">${postCatLabels[p.category] || 'News'}</span>
+                        </div>
+                        <small class="text-muted">${p.date || ''}</small>
+                    </div>
+                    <div class="text-muted mt-1 small">${(p.content || '').substring(0, 120)}${(p.content || '').length > 120 ? '…' : ''}</div>
+                </div>
+                <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="deletePost(${p.id})"><i class="fas fa-trash-alt me-1"></i> Delete</button>
+            </div>`;
+        }).join('');
+    } catch(e) {
+        container.innerHTML = '<p class="text-danger">Error loading posts.</p>';
+    }
+}
+
+async function publishPost() {
+    const title = document.getElementById('post_title').value.trim();
+    const category = document.getElementById('post_category').value;
+    const content = document.getElementById('post_content').value.trim();
+    const imageInput = document.getElementById('post_image_input');
+
+    if (!title || !content) {
+        showStatus('Please provide both a title and content.', true);
+        return;
+    }
+
+    let image_path = '';
+    if (imageInput && imageInput.files && imageInput.files.length > 0) {
+        const formData = new FormData();
+        formData.append('image', imageInput.files[0]);
+        formData.append('key', 'post_temp');
+        try {
+            const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
+            const uploadResult = await uploadRes.json();
+            if (uploadResult.success) image_path = uploadResult.path;
+        } catch(e) {
+            console.warn('Post image upload failed', e);
+        }
+    }
+
+    try {
+        const res = await fetch('/api/posts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, category, content, image_path })
+        });
+        const result = await res.json();
+        if (res.ok && result.success) {
+            showStatus('Post published successfully!');
+            document.getElementById('post_title').value = '';
+            document.getElementById('post_content').value = '';
+            if (imageInput) imageInput.value = '';
+            loadPosts();
+        } else {
+            showStatus(result.message || 'Failed to publish post', true);
+        }
+    } catch(e) {
+        showStatus('Server error during publish', true);
+    }
+}
+
+async function deletePost(id) {
+    if (!confirm('Are you sure you want to delete this post?')) return;
+    try {
+        const res = await fetch('/api/posts/' + id, { method: 'DELETE' });
+        const result = await res.json();
+        if (res.ok && result.success) {
+            showStatus('Post deleted successfully');
+            loadPosts();
+        } else {
+            showStatus('Failed to delete post', true);
+        }
+    } catch(e) {
+        showStatus('Error deleting post', true);
+    }
 }
 
 // ============================================================
@@ -416,8 +548,258 @@ async function loadNotifPanel() {
                     </div>
                 </div></li>`;
         });
-        list.innerHTML = html || '<li class="list-group-item text-center text-muted py-4">All caught up! No unread notifications.</li>';
+list.innerHTML = html || '<li class="list-group-item text-center text-muted py-4">All caught up! No unread notifications.</li>';
     } catch(e) {
         list.innerHTML = '<li class="list-group-item text-danger">Failed to load notifications.</li>';
     }
 }
+
+// ============================================================
+// Admission Application PDF Export
+// ============================================================
+
+async function downloadAdmissionPDF(id) {
+    try {
+        const res = await fetch('/api/admissions');
+        const data = await res.json();
+        if (!data.success) { showStatus('Failed to load application', true); return; }
+        const app = data.data.find(a => a.id === id);
+        if (!app) { showStatus('Application not found', true); return; }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'pt', 'a4');
+        const pageWidth = doc.internal.pageSize.getWidth();   // 595
+        const pageHeight = doc.internal.pageSize.getHeight(); // 842
+        const M = 40;
+        const contentW = pageWidth - (2 * M);
+        let y = 0;
+
+        const NAVY = [18, 52, 96];
+        const GOLD = [178, 138, 28];
+        const DARK = [33, 33, 33];
+        const GRAY = [120, 120, 120];
+
+        // ============ FORM HEADER (mirrors the admission form) ============
+        // Top gold + navy bars
+        doc.setFillColor(...GOLD);
+        doc.rect(0, 0, pageWidth, 6, 'F');
+        doc.setFillColor(...NAVY);
+        doc.rect(0, 6, pageWidth, 4, 'F');
+
+        // Centered school name
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(17);
+        doc.setTextColor(...NAVY);
+        doc.text('SS. JOACHIM AND ANNE CATHOLIC SCHOOL', pageWidth / 2, 44, {align: 'center'});
+
+        // Subtitle
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.setTextColor(60, 60, 60);
+        doc.text('ADMISSION APPLICATION FORM', pageWidth / 2, 62, {align: 'center'});
+
+        // School contact line
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(...GRAY);
+        doc.text('412 Road, Gowon Estate, Lagos  |  +234 805 476 9226  |  info@sjacs.edu.ng', pageWidth / 2, 76, {align: 'center'});
+
+        // Double border under header
+        doc.setDrawColor(...GOLD);
+        doc.setLineWidth(2);
+        doc.line(M, 86, pageWidth - M, 86);
+        doc.setDrawColor(...NAVY);
+        doc.setLineWidth(0.6);
+        doc.line(M, 90, pageWidth - M, 90);
+
+        y = 108;
+
+        // Application meta row
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(...DARK);
+        doc.text(`Application No: ${app.id}`, M, y);
+        doc.text(`Submitted: ${app.submitted_at || '-'}`, pageWidth - M, y, {align: 'right'});
+        y += 18;
+        doc.text('Session/Term:', M, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${app.session_term || '-'}`, M + 62, y);
+        doc.setDrawColor(200, 200, 200);
+        doc.line(M + 62, y + 4, M + 220, y + 4);
+        y += 22;
+
+        // ============ HELPER FUNCTIONS ============
+
+        // Section heading (navy text with underline, like the form)
+        const sectionTitle = (title, space = 8) => {
+            y += space;
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(11);
+            doc.setTextColor(...NAVY);
+            doc.text(title, M, y);
+            doc.setDrawColor(...GOLD);
+            doc.setLineWidth(1);
+            doc.line(M, y + 4, pageWidth - M, y + 4);
+            y += 16;
+        };
+
+        // A labelled field with a bottom line (form control look)
+        // cols: array of {label, value, w}
+        const fieldRow = (cols) => {
+            const gap = 14;
+            const totalW = contentW - (gap * (cols.length - 1));
+            let x = M;
+            const labelY = y;
+            const valY = y + 14;
+            const lineY = y + 18;
+            cols.forEach(c => {
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.5);
+                doc.setTextColor(...GRAY);
+                doc.text(c.label.toUpperCase(), x, labelY);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(9.5);
+                doc.setTextColor(...DARK);
+                doc.text(c.value || '', x, valY);
+                doc.setDrawColor(200, 200, 200);
+                doc.setLineWidth(0.5);
+                doc.line(x, lineY, x + c.w, lineY);
+                x += c.w + gap;
+            });
+            y += 26;
+        };
+
+        // Full-width text field (for addresses / long text)
+        const fullField = (label, value) => {
+            fieldRow([{ label, value: value || '', w: contentW }]);
+        };
+
+        // ============ 1. SCHOOL INFORMATION ============
+        sectionTitle('SCHOOL INFORMATION');
+        fieldRow([
+            { label: 'School Name', value: 'SS. Joachim and Anne Catholic School', w: contentW * 0.5 },
+            { label: 'Session / Term', value: app.session_term || '', w: contentW * 0.5 }
+        ]);
+
+        // ============ 2. STUDENT INFORMATION ============
+        sectionTitle('STUDENT INFORMATION', 6);
+
+        // Passport photo box on the right, name on the left
+        const photoW = 70;
+        const photoH = 80;
+        const photoX = pageWidth - M - photoW;
+        const nameW = contentW - photoW - 20;
+
+        // Name field
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(6.5);
+        doc.setTextColor(...GRAY);
+        doc.text('FULL NAME', M, y);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(11);
+        doc.setTextColor(...DARK);
+        doc.text(app.student_name || '', M, y + 16);
+        doc.setDrawColor(200, 200, 200);
+        doc.line(M, y + 20, M + nameW, y + 20);
+
+        // Passport photo box
+        doc.setDrawColor(0, 0, 0);
+        doc.setLineWidth(1);
+        doc.rect(photoX, y, photoW, photoH);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        doc.setTextColor(...GRAY);
+        doc.text('PASSPORT', photoX + (photoW / 2), y + (photoH / 2) - 4, {align: 'center'});
+        doc.text('PHOTO', photoX + (photoW / 2), y + (photoH / 2) + 6, {align: 'center'});
+        y += photoH + 10;
+
+        // DOB / Gender / Nationality
+        const third = (contentW - 28) / 3;
+        fieldRow([
+            { label: 'Date of Birth', value: app.date_of_birth || '', w: third },
+            { label: 'Gender', value: (app.gender || '').replace(/^./, ch => ch.toUpperCase()), w: third },
+            { label: 'Nationality', value: app.nationality || '', w: third }
+        ]);
+
+        fullField('Home Address', app.student_home_address || app.address);
+        const half = (contentW - 14) / 2;
+        fieldRow([
+            { label: 'Previous School Attended', value: app.previous_school || '', w: half },
+            { label: 'Class Applying For', value: app.class_applying || '', w: half }
+        ]);
+
+        // ============ 3. PARENT / GUARDIAN INFORMATION ============
+        sectionTitle('PARENT / GUARDIAN INFORMATION', 6);
+        fieldRow([
+            { label: 'Full Name', value: app.parent_name || '', w: half },
+            { label: 'Relationship to Student', value: app.parent_relationship || '', w: half }
+        ]);
+        fieldRow([
+            { label: 'Occupation', value: app.parent_occupation || '', w: half },
+            { label: 'Phone Number', value: app.parent_phone || '', w: half }
+        ]);
+        fullField('Email Address', app.parent_email);
+        fullField('Home Address (if different)', app.parent_home_address);
+
+        // ============ 4. EMERGENCY CONTACT ============
+        sectionTitle('EMERGENCY CONTACT', 6);
+        fieldRow([
+            { label: 'Contact Name', value: app.emergency_contact_name || '', w: third },
+            { label: 'Phone Number', value: app.emergency_contact_phone || '', w: third },
+            { label: 'Relationship', value: app.emergency_contact_relationship || '', w: third }
+        ]);
+
+        // ============ 5. MEDICAL INFORMATION ============
+        sectionTitle('MEDICAL INFORMATION', 6);
+        fieldRow([
+            { label: 'Blood Group', value: app.blood_group || '', w: contentW * 0.3 }
+        ]);
+        fullField('Allergies / Medical Conditions', app.allergies_medical_conditions);
+
+        // ============ 6. DECLARATION ============
+        sectionTitle('DECLARATION', 6);
+        // Declaration box
+        doc.setDrawColor(...NAVY);
+        doc.setLineWidth(0.8);
+        const declText = doc.splitTextToSize(
+            'I hereby declare that the information provided above is true and correct to the best of my knowledge. I agree to abide by the rules and regulations of the school.',
+            contentW - 20
+        );
+        const declH = (declText.length * 13) + 30;
+        doc.rect(M, y, contentW, declH);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(...NAVY);
+        doc.text('Declaration', M + 10, y + 18);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(...DARK);
+        doc.text(declText, M + 10, y + 36);
+        y += declH + 12;
+
+        // Signature and date
+        fieldRow([
+            { label: "Parent/Guardian Signature (Typed)", value: app.parent_signature || '', w: contentW * 0.6 },
+            { label: 'Date', value: app.signature_date || '', w: contentW * 0.4 }
+        ]);
+
+        // ============ FOOTER ============
+        doc.setDrawColor(...GOLD);
+        doc.setLineWidth(1);
+        doc.line(M, pageHeight - 40, pageWidth - M, pageHeight - 40);
+
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(8);
+        doc.setTextColor(...GRAY);
+        doc.text('This is a computer-generated admission application form issued by SS. Joachim and Anne Catholic School.', pageWidth / 2, pageHeight - 24, {align: 'center'});
+
+        const safeName = (app.student_name || 'student').replace(/[^a-z0-9]+/gi, '_');
+        doc.save(`Admission_Application_${app.id}_${safeName}.pdf`);
+    } catch (e) {
+        console.error('PDF generation error', e);
+        showStatus('Failed to generate PDF', true);
+    }
+}
+

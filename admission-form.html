@@ -1,94 +1,257 @@
 <!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>Admission Form - Sts. Joachim and Anne Catholic School</title>
+
+    <!-- ===== SEO Meta Tags ===== -->
+    <link rel="canonical" href="https://ssja.onrender.com/admission-form">
+    <meta name="robots" content="index, follow">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ssja.onrender.com/admission-form">
+    <meta property="og:title" content="Admission Form - SS. Joachim and Anne Catholic School">
+    <meta property="og:description" content="Apply for admission at SS. Joachim and Anne Catholic School. Complete and submit the admission application form online.">
+    <meta property="og:image" content="https://ssja.onrender.com/images/logo.png">
+    <meta property="og:site_name" content="SS. Joachim and Anne Catholic School">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Admission Form - SS. Joachim and Anne Catholic School">
+    <meta name="twitter:description" content="Apply for admission at SS. Joachim and Anne Catholic School. Complete and submit the admission application form online.">
+    <meta name="twitter:image" content="https://ssja.onrender.com/images/logo.png">
+    <meta name="theme-color" content="#123460">
+    <!-- ===== End SEO Meta Tags ===== -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Apply for admission at Sts. Joachim and Anne Catholic School.">
+    <title>Admission Form - SS. Joachim and Anne Catholic School</title>
+    <meta name="description" content="Apply for admission at SS. Joachim and Anne Catholic School. Complete and submit the admission application form online.">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="icon" type="image/x-icon" href="images/logo.png">
-    <style>
+<style>
+        .print-header {
+            display: none;
+        }
+        .print-footer {
+            display: none;
+        }
+
         @media print {
             @page {
                 size: A4 portrait;
-                margin: 0.5cm;
+                margin: 8mm 10mm;
             }
             body {
                 background: white !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
-                font-size: 11px !important;
-                line-height: 1.3 !important;
-                color: black !important;
+                font-size: 8.5px !important;
+                line-height: 1.2 !important;
+                color: #000 !important;
             }
-            .hero, header, footer, .no-print, .text-muted, .card-header {
+            .hero, header, footer, .no-print, .text-muted, .card-header, .alert {
                 display: none !important;
             }
-            .py-5, section, .card-body {
+            .py-5, section, .card-body, .card {
                 padding: 0 !important;
                 margin: 0 !important;
-            }
-            .card {
-            }
-            .card {
                 border: none !important;
                 box-shadow: none !important;
+                border-radius: 0 !important;
             }
-            input[type="file"] {
-                display: none !important;
+            .container {
+                max-width: 100% !important;
+                padding: 0 !important;
             }
+            .row.g-3 {
+                margin-bottom: 2px !important;
+            }
+            .col-md-4, .col-md-6, .col-md-12 {
+                margin-bottom: 0 !important;
+            }
+            form {
+                margin: 0 !important;
+            }
+
+            /* ===== Branded header with gold/navy bars (matches PDF) ===== */
+            .print-header {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                position: relative;
+                margin: 0 !important;
+                padding: 10px 0 8px 0 !important;
+                border-bottom: none !important;
+            }
+            /* Gold top bar */
+            .print-header::before {
+                content: "";
+                position: absolute;
+                top: -8mm;
+                left: -10mm;
+                right: -10mm;
+                height: 6px;
+                background: #B28A1C;
+            }
+            /* Navy second bar */
+            .print-header::after {
+                content: "";
+                position: absolute;
+                top: -8mm;
+                left: -10mm;
+                right: -10mm;
+                margin-top: 6px;
+                height: 4px;
+                background: #123460;
+            }
+            .print-header img {
+                height: 55px !important;
+                margin-right: 14px !important;
+            }
+            .print-header h2 {
+                font-size: 15px !important;
+                color: #123460 !important;
+                font-weight: 800 !important;
+                letter-spacing: 0.5px;
+                text-transform: uppercase;
+            }
+            .print-header h4 {
+                font-size: 11px !important;
+                color: #444 !important;
+                font-weight: bold !important;
+                letter-spacing: 1px;
+            }
+            /* Double rule under header */
+            .print-header .print-title-wrap {
+                position: relative;
+                width: 100%;
+                padding-bottom: 4px;
+            }
+            .print-header + h4 {
+                border-top: 1px solid #B28A1C !important;
+            }
+            /* Gold + navy divider under the header (via the School Information heading) */
+            form > h4:first-of-type {
+                position: relative;
+                padding-top: 5px !important;
+            }
+            form > h4:first-of-type::before {
+                content: "";
+                display: block;
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: #B28A1C;
+            }
+
+            /* Underline-style form fields */
             .form-control, .form-select, textarea {
                 border: none !important;
                 border-bottom: 1px solid #000 !important;
                 border-radius: 0 !important;
-                padding: 2px 0 !important;
+                padding: 0 0 1px 0 !important;
                 height: auto !important;
+                min-height: 0 !important;
                 background: transparent !important;
                 color: #000 !important;
                 font-weight: bold !important;
+                font-size: 8.5px !important;
                 appearance: none !important;
                 -webkit-appearance: none !important;
+                box-shadow: none !important;
             }
             textarea {
-                height: 40px !important;
-                min-height: 40px !important;
+                height: 24px !important;
+                min-height: 24px !important;
+                resize: none !important;
             }
             .form-label {
-                font-size: 11px !important;
-                margin-bottom: 2px !important;
-                color: #555 !important;
+                font-size: 6.5px !important;
+                margin-bottom: 0 !important;
+                color: #666 !important;
                 text-transform: uppercase;
-                letter-spacing: 0.5px;
-            }
-            form h4 {
-                color: #003366 !important;
-                border-bottom: 2px solid #003366 !important;
-                margin-top: 15px !important;
-                margin-bottom: 10px !important;
-                padding-bottom: 5px !important;
-                font-size: 14px !important;
-                text-transform: uppercase;
+                letter-spacing: 0.3px;
                 font-weight: bold !important;
             }
-            .print-header {
-                display: flex !important;
+            .mb-4 {
+                margin-bottom: 3px !important;
             }
-            /* Passport container for print */
+            .mt-5 {
+                margin-top: 5px !important;
+            }
+
+            /* Compact section headings — navy with gold underline */
+            form h4 {
+                color: #123460 !important;
+                border-bottom: 1.5px solid #B28A1C !important;
+                margin-top: 5px !important;
+                margin-bottom: 3px !important;
+                padding-bottom: 2px !important;
+                font-size: 9.5px !important;
+                text-transform: uppercase;
+                font-weight: bold !important;
+                letter-spacing: 0.5px;
+            }
+
+            /* Passport photo box */
             #passport-preview-container {
-                border: 2px solid #000 !important;
-                background: transparent !important;
+                width: 70px !important;
+                height: 80px !important;
+                border: 1.5px solid #000 !important;
+                background: #fff !important;
                 border-radius: 0 !important;
+                flex-shrink: 0 !important;
+            }
+            #passport-preview {
+                width: 100% !important;
+                height: 100% !important;
+                object-fit: cover !important;
             }
             #passport-preview-container span {
                 display: none !important;
             }
-        }
-        
-        .print-header {
-            display: none;
+            /* Passport photo field sits next to name */
+            .d-flex.align-items-center.gap-4 {
+                gap: 10px !important;
+            }
+
+            /* Declaration box — navy border to match PDF */
+            .mt-5.p-4.rounded {
+                margin-top: 5px !important;
+                padding: 4px 8px !important;
+                border: 1.5px solid #123460 !important;
+                background: #fff !important;
+                border-radius: 0 !important;
+            }
+            .form-check {
+                margin-bottom: 3px !important;
+            }
+            .form-check-input {
+                display: none !important;
+            }
+            .p-4.rounded h5 {
+                font-size: 9.5px !important;
+                color: #123460 !important;
+                border-bottom: 1.5px solid #B28A1C !important;
+                padding-bottom: 2px !important;
+                margin-bottom: 3px !important;
+            }
+            .form-check-label {
+                font-size: 8px !important;
+            }
+
+            /* Footer note for generated forms */
+            .print-footer {
+                display: block !important;
+                text-align: center;
+                font-size: 7px;
+                color: #888;
+                font-style: italic;
+                margin-top: 6px;
+                border-top: 1px solid #B28A1C;
+                padding-top: 4px;
+            }
         }
     </style>
 </head>
@@ -120,9 +283,9 @@
     <!-- Hero Section -->
     <section class="hero d-flex align-items-center justify-content-center" style="height: 40vh; background: linear-gradient(135deg, var(--primary-color), rgba(0, 51, 102, 0.8)), url('images/hero-bg.jpg') center/cover; position: relative;">
         <div class="container text-center text-white position-relative" style="z-index: 2;">
-         
+
                         <h1 >Admission</h1>
-            <p class="lead" data-aos="fade-up" data-aos-delay="200">Join our community of excellence at Sts. Joachim and Anne Catholic School</p>
+            <p class="lead" data-aos="fade-up" data-aos-delay="200">Join our community of excellence at SS. Joachim and Anne Catholic School</p>
         </div>
     </section>
 
@@ -141,7 +304,7 @@
                                 <div class="print-header align-items-center justify-content-center mb-4 pb-3" style="border-bottom: 3px solid #003366;">
                                     <img src="images/logo.png" alt="Logo" style="height: 70px; margin-right: 20px;">
                                     <div class="text-center">
-                                        <h2 style="margin: 0; color: #003366; font-weight: bold; font-size: 22px; text-transform: uppercase;">Sts. Joachim and Anne Catholic School</h2>
+                                        <h2 style="margin: 0; color: #003366; font-weight: bold; font-size: 22px; text-transform: uppercase;">SS. Joachim and Anne Catholic School</h2>
                                         <h4 style="margin: 5px 0 0 0; color: #333; font-size: 16px; font-weight: bold;">ADMISSION APPLICATION FORM</h4>
                                     </div>
                                 </div>
@@ -150,7 +313,7 @@
                                 <div class="row g-3 mb-4">
                                     <div class="col-md-4">
                                         <label class="form-label fw-bold">School Name</label>
-                                        <input type="text" class="form-control" name="school_name" value="Sts. Joachim and Anne Catholic School" readonly style="background-color: #f8f9fa;">
+                                        <input type="text" class="form-control" name="school_name" value="SS. Joachim and Anne Catholic School" readonly style="background-color: #f8f9fa;">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-bold">Session/Term</label>
@@ -208,7 +371,7 @@
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label fw-bold">Previous School Attended</label>
-                                        <input type="text" class="form-control" name="previous_school" placeholder="Name of previous school" required>
+                                        <input type="text" class="form-control" name="previous_school" placeholder="Name of previous school" >
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label fw-bold">Class Applying For</label>
@@ -272,15 +435,15 @@
                                 <div class="row g-3 mb-4">
                                     <div class="col-md-4">
                                         <label class="form-label fw-bold">Contact Name</label>
-                                        <input type="text" class="form-control" name="emergency_contact_name" placeholder="Full Name" required>
+                                        <input type="text" class="form-control" name="emergency_contact_name" placeholder="Full Name">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-bold">Phone Number</label>
-                                        <input type="tel" class="form-control" name="emergency_contact_phone" placeholder="Active phone number" required>
+                                        <input type="tel" class="form-control" name="emergency_contact_phone" placeholder="Active phone number">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-bold">Relationship</label>
-                                        <input type="text" class="form-control" name="emergency_contact_relationship" placeholder="e.g. Aunt, Neighbor" required>
+                                        <input type="text" class="form-control" name="emergency_contact_relationship" placeholder="e.g. Aunt, Neighbor">
                                     </div>
                                 </div>
 
@@ -336,10 +499,11 @@
                                         <span id="admissionSpinner" class="spinner-border spinner-border-sm me-2 d-none"></span>
                                         Submit Application
                                     </button>
-                                    <button type="button" onclick="window.print()" class="btn btn-secondary btn-lg px-5 py-3 shadow-sm text-white fw-bold" style="border-radius: 30px; font-size: 1.1rem; max-width: 300px; text-transform: uppercase; letter-spacing: 1px; background-color: #6c757d; border: none;">
+<button type="button" onclick="window.print()" class="btn btn-secondary btn-lg px-5 py-3 shadow-sm text-white fw-bold" style="border-radius: 30px; font-size: 1.1rem; max-width: 300px; text-transform: uppercase; letter-spacing: 1px; background-color: #6c757d; border: none;">
                                         <i class="fas fa-print me-2"></i> Print to PDF
                                     </button>
                                 </div>
+<div class="print-footer">This is a computer-generated admission application form issued by SS. Joachim and Anne Catholic School.</div>
                             </form>
                         </div>
                     </div>
@@ -353,7 +517,7 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-4 mb-4 mb-md-0">
-                    <h5 class="mb-3 text-uppercase" style="color: var(--secondary-color);">Sts. Joachim and Anne</h5>
+                    <h5 class="mb-3 text-uppercase" style="color: var(--secondary-color);">SS. Joachim and Anne</h5>
                     <p class="small text-light" style="opacity: 0.8;">Nurturing Faith, Excellence, and Community. Providing holistic education that inspires students to achieve their full potential.</p>
                 </div>
                 <div class="col-md-2 mb-4 mb-md-0">
@@ -385,7 +549,7 @@
             <hr class="my-4" style="border-color: rgba(255,255,255,0.2);">
             <div class="row align-items-center">
                 <div class="col-md-6 text-center text-md-start small text-light" style="opacity: 0.8;">
-                    &copy; 2026 Sts. Joachim and Anne Catholic School. All Rights Reserved.
+                    &copy; 2026 SS. Joachim and Anne Catholic School. All Rights Reserved.
                 </div>
                 <div class="col-md-6 text-center text-md-end small text-light mt-3 mt-md-0" style="opacity: 0.8;">
                     Made with <i class="fas fa-heart text-danger heartbeat"></i> by <a href="https://bit.ly/HiveryTech" target="_blank" class="text-decoration-none fw-bold" style="color: var(--secondary-color);">HiveryTech LTD</a> in conjunction with <a href="https://osartech.onrender.com/" target="_blank" class="text-decoration-none fw-bold" style="color: var(--secondary-color);">OsarTech</a>
@@ -418,14 +582,65 @@
             }
         });
 
-        // Intercept form submission and send to local API
+        // Intercept form submission and send to backend API
+        document.getElementById('admissionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const statusBox = document.getElementById('admission_status');
+            const submitBtn = document.getElementById('admissionSubmitBtn');
+            const spinner = document.getElementById('admissionSpinner');
 
+            submitBtn.disabled = true;
+            spinner.classList.remove('d-none');
+
+            // Handle passport photo upload first
+            const passportInput = document.getElementById('passport_input');
+            let passportPhotoPath = '';
+
+            if (passportInput && passportInput.files && passportInput.files.length > 0) {
+                const passportFormData = new FormData();
+                passportFormData.append('image', passportInput.files[0]);
+                passportFormData.append('key', 'passport_temp');
+
+                try {
+                    const uploadRes = await fetch('/api/upload', {
+                        method: 'POST',
+                        body: passportFormData
+                    });
+                    const uploadResult = await uploadRes.json();
+                    if (uploadResult.success) {
+                        passportPhotoPath = uploadResult.path;
+                    }
+                } catch(e) {
+                    console.warn('Passport upload failed, continuing without it');
+                }
+            }
+
+            // Collect form data with correct field name mapping
+            const form = e.target;
+            const data = {
+                student_name: form.querySelector('[name="student_fullname"]')?.value || '',
+                date_of_birth: form.querySelector('[name="date_of_birth"]')?.value || '',
                 gender: form.querySelector('[name="gender"]')?.value || '',
-                class_applying: form.querySelector('[name="class_applying"]')?.value || '',
-                parent_name: form.querySelector('[name="parent_name"]')?.value || '',
+                class_applying: form.querySelector('[name="class_applying_for"]')?.value || '',
+                parent_name: form.querySelector('[name="parent_fullname"]')?.value || '',
                 parent_phone: form.querySelector('[name="parent_phone"]')?.value || '',
                 parent_email: form.querySelector('[name="parent_email"]')?.value || '',
-                address: form.querySelector('[name="home_address"]')?.value || form.querySelector('[name="address"]')?.value || ''
+                address: form.querySelector('[name="student_home_address"]')?.value || '',
+                session_term: form.querySelector('[name="session_term"]')?.value || '',
+                nationality: form.querySelector('[name="nationality"]')?.value || '',
+                student_home_address: form.querySelector('[name="student_home_address"]')?.value || '',
+                previous_school: form.querySelector('[name="previous_school"]')?.value || '',
+                parent_relationship: form.querySelector('[name="parent_relationship"]')?.value || '',
+                parent_occupation: form.querySelector('[name="parent_occupation"]')?.value || '',
+                parent_home_address: form.querySelector('[name="parent_home_address"]')?.value || '',
+                emergency_contact_name: form.querySelector('[name="emergency_contact_name"]')?.value || '',
+                emergency_contact_phone: form.querySelector('[name="emergency_contact_phone"]')?.value || '',
+                emergency_contact_relationship: form.querySelector('[name="emergency_contact_relationship"]')?.value || '',
+                blood_group: form.querySelector('[name="blood_group"]')?.value || '',
+                allergies_medical_conditions: form.querySelector('[name="allergies_medical_conditions"]')?.value || '',
+                parent_signature: form.querySelector('[name="parent_signature"]')?.value || '',
+                signature_date: form.querySelector('[name="signature_date"]')?.value || '',
+                passport_photo_path: passportPhotoPath
             };
 
             try {
@@ -440,6 +655,9 @@
                 statusBox.classList.remove('d-none');
                 window.scrollTo({top: 0, behavior: 'smooth'});
                 form.reset();
+                document.getElementById('passport-preview').style.display = 'none';
+                const previewSpan = document.querySelector('#passport-preview-container span');
+                if (previewSpan) previewSpan.style.display = 'block';
             } catch(err) {
                 statusBox.className = 'alert alert-danger mb-4';
                 statusBox.textContent = '❌ Submission failed. Please check your connection and try again.';

@@ -11,8 +11,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="arc arc1"></div>
                 <div class="arc arc2"></div>
                 <div class="arc arc3"></div>
+            </div>
         </div>
-        <div class="loader-text">Loading Sts. Joachim and Anne Catholic School...</div>
+        <div class="loader-text">Loading SS. Joachim and Anne Catholic School...</div>
     `;
     document.body.prepend(preloader);
     
@@ -200,6 +201,53 @@ document.addEventListener('DOMContentLoaded', function() {
     }, { threshold: 0.3 });
     
     observer.observe(growthPanel);
+});
+
+// ============================================================
+// Homepage Latest News / Blog / Events
+// ============================================================
+document.addEventListener('DOMContentLoaded', async function() {
+    const grid = document.getElementById('homePostsGrid');
+    if (!grid) return; // Only run on pages that have the grid (homepage)
+
+    const catLabels = { news: 'News', blog: 'Blog', event: 'Event' };
+
+    try {
+        const res = await fetch('/api/posts');
+        const data = await res.json();
+        if (!data.success) throw new Error('Failed to load posts');
+
+        const posts = (data.data || []).slice(0, 3); // Show latest 3
+
+        if (posts.length === 0) {
+            grid.innerHTML = '<div class="col-12 text-center text-muted py-5"><i class="fas fa-newspaper fa-3x mb-3"></i><p>No updates published yet. Check back soon!</p></div>';
+            return;
+        }
+
+        grid.innerHTML = posts.map(p => {
+            const img = p.image_path
+                ? `<img src="${p.image_path}" alt="${p.title || 'Post image'}" style="height:200px;width:100%;object-fit:cover;background:#eef1f5;">`
+                : `<div style="height:200px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#003366,#0056b3);"><i class="fas fa-newspaper text-white" style="font-size:3rem;opacity:.6;"></i></div>`;
+            const excerpt = (p.content || '').length > 100 ? p.content.substring(0, 100) + '…' : (p.content || '');
+            return `
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 post-card border-0 shadow-sm" style="border-radius:14px;overflow:hidden;transition:transform .3s,box-shadow .3s;">
+                        <div class="position-relative">
+                            ${img}
+                            <span class="position-absolute" style="top:14px;left:14px;background:#003366;color:#fff;font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;padding:4px 10px;border-radius:30px;">${catLabels[p.category] || 'News'}</span>
+                        </div>
+                        <div class="card-body p-4">
+                            ${p.date ? `<small class="text-muted"><i class="far fa-calendar-alt me-1"></i>${p.date}</small>` : ''}
+                            <h5 class="fw-bold mt-1 mb-2" style="color:var(--primary-color);">${p.title || 'Untitled'}</h5>
+                            <p class="text-muted mb-0" style="font-size:.95rem;">${excerpt}</p>
+                        </div>
+                    </div>
+                </div>`;
+        }).join('');
+    } catch(e) {
+        console.error('Error loading homepage posts', e);
+        grid.innerHTML = '<div class="col-12 text-center text-muted py-5"><p>Unable to load updates at the moment.</p></div>';
+    }
 });
 
 // Navbar active state

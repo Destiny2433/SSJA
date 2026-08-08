@@ -1,4 +1,4 @@
-/* Custom CSS for Sts. Joachim and Anne Catholic School */
+/* Custom CSS for SS. Joachim and Anne Catholic School */
 
 /* Color Variables */
 :root {
@@ -424,6 +424,25 @@ body {
     height: 100%;
     padding: 2rem 1.5rem;
     transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.facility-card::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #003366, #FFD700, #003366);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.facility-card:hover::before {
+    transform: scaleX(1);
 }
 
 .facility-card:hover {
@@ -440,6 +459,33 @@ body {
     line-height: 78px;
     margin-bottom: 1rem;
     width: 78px;
+    transition: all 0.4s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.facility-card:hover i {
+    background: linear-gradient(135deg, #003366, #0056b3);
+    color: #FFD700;
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 8px 25px rgba(0, 51, 102, 0.25);
+}
+
+.facility-card h5 {
+    transition: color 0.3s ease;
+}
+
+.facility-card:hover h5 {
+    color: #0056b3;
+}
+
+.facility-card p {
+    transition: opacity 0.3s ease;
+}
+
+.facility-card:hover p {
+    opacity: 0.9;
 }
 
 .growth-panel {
@@ -796,6 +842,33 @@ footer .d-flex.gap-3 a:hover {
     100% { transform: rotate(360deg); }
 }
 
+      
+
+.cta-p-section::after {
+    background-color: rgba(164, 151, 64, 0.384);
+    border-radius: 50%;
+    content: '';
+    height: 240px;
+    position: absolute;
+    right: -80px;
+    top: -80px;
+    width: 240px;
+}
+
+.cta-p-section h2 {
+    color: #fff;
+}
+
+.cta-p-section .container {
+    position: relative;
+    z-index: 1;
+    
+}
+
+.cta-p-icon {
+    background: linear-gradient(135deg, #FFD700, #ffb703);
+    color: var(--primary-color);
+}
 /* Heartbeat Animation for "Made with Love" */
 @keyframes heartbeat {
     0% { transform: scale(1); }
@@ -837,6 +910,203 @@ footer .col-md-6.text-md-end a::after {
 footer .col-md-6.text-md-end a:hover::after {
     transform: scaleX(1);
     transform-origin: bottom left;
-}</｜｜DSML｜｜parameter>
+}
+
+/* ============================================================
+   FEATURE 5: 3D Tilt Cards
+   ============================================================ */
+.tilt-card {
+    transform-style: preserve-3d;
+    transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.35s ease;
+    will-change: transform;
+}
+
+.tilt-card .card-body,
+.tilt-card > * {
+    transform: translateZ(24px);
+    backface-visibility: hidden;
+}
+
+.feature-card.tilt-card:hover,
+.facility-card.tilt-card:hover {
+    box-shadow: 0 25px 55px rgba(0, 51, 102, 0.22);
+}
+
+/* ============================================================
+   FEATURE 7: Announcement Ticker (Admin-Connected)
+   ============================================================ */
+.announcement-ticker {
+    background: linear-gradient(90deg, #003366, #0056b3);
+    color: #fff;
+    overflow: hidden;
+    position: relative;
+    z-index: 10;
+    border-bottom: 3px solid #FFD700;
+}
+
+.ticker-inner {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.ticker-label {
+    background: #FFD700;
+    color: #003366;
+    font-weight: 800;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 2;
+}
+
+.ticker-track {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+}
+
+.ticker-track .ticker-content {
+    display: inline-block;
+    padding: 8px 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    animation: ticker-scroll 28s linear infinite;
+    white-space: nowrap;
+}
+
+.ticker-track .ticker-content span {
+    margin-right: 60px;
+}
+
+.ticker-track .ticker-content i {
+    color: #FFD700;
+    margin-right: 8px;
+}
+
+.ticker-track .ticker-content.empty {
+    animation: none;
+    color: rgba(255,255,255,0.85);
+    font-style: italic;
+}
+
+@keyframes ticker-scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+.ticker-track:hover .ticker-content {
+    animation-play-state: paused;
+}
+
+/* ============================================================
+   FEATURE 8: Enhanced Testimonials Slider
+   ============================================================ */
+.testimonial-slider {
+    position: relative;
+}
+
+.testimonial-slide {
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.testimonial-slider .testimonial {
+    background: linear-gradient(135deg, #ffffff, #f0f5fb);
+    border-radius: 20px;
+    padding: 2.5rem 3rem;
+    box-shadow: 0 12px 40px rgba(0, 51, 102, 0.12);
+    position: relative;
+    border-top: 5px solid #FFD700;
+}
+
+.testimonial-slider .testimonial::before {
+    content: '\201C';
+    position: absolute;
+    top: 0;
+    left: 24px;
+    font-size: 5rem;
+    font-family: Georgia, serif;
+    color: rgba(0, 51, 102, 0.15);
+    line-height: 1;
+}
+
+.testimonial-slider .testimonial p {
+    font-size: 1.15rem;
+    font-style: italic;
+    color: #444;
+}
+
+.testimonial-slider .testimonial cite {
+    color: var(--primary-color);
+    font-weight: 700;
+    font-style: normal;
+    letter-spacing: 0.5px;
+}
+
+.testimonial-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #003366, #0056b3);
+    color: #FFD700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin-right: 12px;
+    box-shadow: 0 6px 18px rgba(0, 51, 102, 0.25);
+}
+
+.tst-nav-btn {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 2px solid rgba(0, 51, 102, 0.2);
+    background: #fff;
+    color: var(--primary-color);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 14px rgba(0, 51, 102, 0.12);
+}
+
+.tst-nav-btn:hover {
+    background: var(--primary-color);
+    color: #FFD700;
+    border-color: var(--primary-color);
+    transform: scale(1.1);
+}
+
+.testimonial-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 1.5rem;
+}
+
+.testimonial-dots .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(0, 51, 102, 0.25);
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 0;
+}
+
+.testimonial-dots .dot.active {
+    width: 28px;
+    background: linear-gradient(90deg, #003366, #0056b3);
+}
 </invoke>
 </｜｜DSML｜｜tool_calls>

@@ -1,9 +1,10 @@
-# Admission Form Fix & Enhancement Task
+# Add New News Posts Task
 
 ## Steps
-- [ ] Step 1: Plan approved - COMPLETE
-- [ ] Step 2: Update database schema in `app.py` - Add all missing columns to admissions table + passport_photo_path
-- [ ] Step 3: Update backend API in `app.py` - Update POST `/api/admissions` to accept all fields & handle passport upload; update GET to return all fields
-- [ ] Step 4: Fix `admission-form.html` - Fix field name attributes, fix duplicate gender select, update JS form collector to map all fields, add passport upload to FormData, fix print CSS for single-page fit
-- [ ] Step 5: Update `admin-dashboard.html` - Expand admissions card to show all form fields
-- [ ] Step 6: Update `js/admin.js` - Update loadAdmissions() to display all admission fields
+- [x] Analyze project structure and understand how posts are stored/managed
+- [x] Review `/api/posts` endpoint, `news.html`, admin dashboard post management
+- [x] Confirm approach with user (insert into PostgreSQL database)
+- [x] Create Python script to insert the 4 news posts
+- [x] Run the script to insert posts into the database
+- [x] Verify the posts were inserted successfully
+

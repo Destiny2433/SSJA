@@ -1,7 +1,7 @@
 {
     "name": "SJACS Admin Panel",
     "short_name": "SJACS Admin",
-    "description": "Admin dashboard for Sts. Joachim and Anne Catholic School",
+    "description": "Admin dashboard for SS. Joachim and Anne Catholic School",
     "start_url": "/admin-dashboard",
     "display": "standalone",
     "background_color": "#0f172a",

@@ -39,7 +39,6 @@ VAPID_PUBLIC_KEY = "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckj
 VAPID_PRIVATE_KEY = "uycSJxLNFTqGfzxvLT1i2mTPJqB3mcZs29_mS4h6E6g"
 VAPID_CLAIMS = {"sub": "mailto:admin@sjacs.edu.ng"}
 
-
 def init_postgres():
     conn = get_db_connection()
     cur = conn.cursor()
@@ -124,6 +123,19 @@ def init_postgres():
 
     cur.execute(
         """
+        CREATE TABLE IF NOT EXISTS posts (
+            id SERIAL PRIMARY KEY,
+            title TEXT NOT NULL,
+            category TEXT DEFAULT 'news',
+            content TEXT NOT NULL,
+            image_path TEXT DEFAULT '',
+            date TEXT
+        )
+        """
+    )
+
+    cur.execute(
+        """
         CREATE TABLE IF NOT EXISTS push_subscriptions (
             id SERIAL PRIMARY KEY,
             subscription_json TEXT UNIQUE NOT NULL
@@ -154,9 +166,6 @@ def send_push_notification(title, body, url='/admin-dashboard'):
         from pywebpush import webpush
 
         conn = get_db_connection()
-        subs = conn.cursor().execute(
-            "SELECT subscription_json FROM push_subscriptions"
-        )
         cur = conn.cursor()
         cur.execute("SELECT subscription_json FROM push_subscriptions")
         rows = cur.fetchall()
@@ -184,7 +193,7 @@ PAGES = [
     'disciplinary-measures', 'school-rules-regulations',
     'academics-calendar', 'academics-curriculum', 'academics-jss-subjects',
     'academics-senior-secondary', 'academics-extra-curricular', 'academics-fees',
-    'admissions', 'admission-form', 'pay-fees', 'gallery', 'contact', 'admin', 'admin-dashboard'
+    'admissions', 'admission-form', 'pay-fees', 'gallery', 'contact', 'admin', 'admin-dashboard', 'news'
 ]
 
 
@@ -455,6 +464,20 @@ def mark_message_read(msg_id):
     return jsonify({"success": True})
 
 
+@app.route('/api/messages/<int:msg_id>', methods=['DELETE'])
+def delete_message(msg_id):
+    if not session.get('admin_logged_in'):
+        return jsonify({"success": False}), 401
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('DELETE FROM messages WHERE id = %s', (msg_id,))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"success": True})
+
+
 # --- Admission Form ---
 @app.route('/api/admissions', methods=['POST'])
 def submit_admission():
@@ -543,6 +566,75 @@ def mark_admission_read(app_id):
     return jsonify({"success": True})
 
 
+# --- News / Blog / Events ---
+@app.route('/api/posts', methods=['GET'])
+def get_posts():
+    
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur.execute('SELECT * FROM posts ORDER BY id DESC')
+    rows = cur.fetchall()
+    conn.close()
+    return jsonify({"success": True, "data": [dict(r) for r in rows]})
+
+
+@app.route('/api/posts/<int:post_id>', methods=['GET'])
+def get_post(post_id):
+    
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur.execute('SELECT * FROM posts WHERE id = %s', (post_id,))
+    row = cur.fetchone()
+    conn.close()
+    if not row:
+    
+    return jsonify({"success": True, "data": dict(row)})
+
+
+@app.route('/api/posts', methods=['POST'])
+def create_post():
+    @app.route('/api/posts/<int:post_id>', methods=['DELETE'])
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+
+    data = request.get_json() or {}
+    timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        INSERT INTO posts (title, category, content, image_path, date)
+        VALUES (%s, %s, %s, %s, %s)
+        """,
+        (
+            data.get('title'),
+            data.get('category', 'news'),
+            data.get('content'),
+            data.get('image_path', ''),
+            data.get('date') or timestamp,
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+    send_push_notification(
+        title="📰 New Post Published",
+        body=f"{data.get('title', 'New post')}",
+        url="/admin-dashboard",
+    )
+
+    return jsonify({"success": True, "message": "Post created!"})
+def delete_post(post_id):
+    if not session.get('admin_logged_in'):
+        return jsonify({"success": False}), 401
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('DELETE FROM posts WHERE id = %s', (post_id,))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"success": True})
+
+
 # --- Notification Count ---
 @app.route('/api/notifications', methods=['GET'])
 def get_notifications():
@@ -573,3 +665,4 @@ def get_notifications():
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
+
