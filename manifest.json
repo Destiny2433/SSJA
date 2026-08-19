@@ -1,7 +1,7 @@
 {
   "name": "SS. JOACHIM AND ANNE",
   "short_name": "SSJA - WEB",
-  "start_url": "/",
+  "start_url": "/admin-dashboard",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",

@@ -240,6 +240,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                             ${p.date ? `<small class="text-muted"><i class="far fa-calendar-alt me-1"></i>${p.date}</small>` : ''}
                             <h5 class="fw-bold mt-1 mb-2" style="color:var(--primary-color);">${p.title || 'Untitled'}</h5>
                             <p class="text-muted mb-0" style="font-size:.95rem;">${excerpt}</p>
+                            <a href="/post/${p.id}" class="btn btn-primary btn-sm mt-3 rounded-pill">Learn more</a>
                         </div>
                     </div>
                 </div>`;

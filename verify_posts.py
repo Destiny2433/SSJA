@@ -1,16 +1,24 @@
-import psycopg2
-from psycopg2.extras import RealDictCursor
+import os
+from dotenv import load_dotenv
 
-conn = psycopg2.connect(
-    host='dpg-d98ddbvavr4c739booh0-a.oregon-postgres.render.com',
-    port=5432,
-    user='ssja_database_systemdb_user',
-    password='KBoFTl9aAXEWLpKcfN2hz9bzLGUUgyij',
-    dbname='ssja_database_systemdb',
-    cursor_factory=RealDictCursor,
-    sslmode='require',
+load_dotenv()
+
+FIREBASE_CREDENTIAL_PATH = os.environ.get(
+    'FIREBASE_CREDENTIAL_PATH',
+    'destiny-c7cd4-firebase-adminsdk-ad232-3fdac99d15.json'
 )
-cur = conn.cursor()
+
+_firestore_client = None
+
+try:
+    import firebase_admin
+    from firebase_admin import credentials, firestore as fs
+except ImportError:
+    firebase_admin = None
+    credentials = None
+    fs = None
+
+
 cur.execute('SELECT id, title, category, length(content) AS len FROM posts ORDER BY id DESC')
 rows = cur.fetchall()
 print('count', len(rows))

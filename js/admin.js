@@ -361,7 +361,9 @@ async function loadAdmissions() {
                     </div>
                     <small class="text-muted">${a.submitted_at || ''}</small>
                 </div>
-                <div class="row mt-2 small text-muted">
+                    <div class="row mt-2 small text-muted">
+                    <div class="col-sm-4"><b>Application No:</b> ${a.application_number || a.id}</div>
+                    <div class="col-sm-4"><b>Status:</b> <select class="form-select form-select-sm d-inline-block w-auto" onchange="updateAdmissionStatus(${a.id}, this.value)">${['Submitted','Under Review','Accepted','Rejected','Waitlisted'].map(s => `<option ${s === (a.status || 'Submitted') ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
                     <div class="col-sm-4"><b>Class:</b> ${a.class_applying || '-'}</div>
                     <div class="col-sm-4"><b>DOB:</b> ${a.date_of_birth || '-'}</div>
                     <div class="col-sm-4"><b>Gender:</b> ${a.gender || '-'}</div>
@@ -372,6 +374,7 @@ async function loadAdmissions() {
                 </div>
 <div class="d-flex gap-2 mt-2">
                     ${!a.is_read ? `<button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="markAdmissionRead(${a.id})">Mark as Read</button>` : ''}
+                    ${a.status === 'Accepted' ? `<a class="btn btn-sm btn-outline-success rounded-pill" href="/admission-letter/${a.id}" target="_blank"><i class="fas fa-file-signature me-1"></i> Admission Letter</a>` : ''}
                     <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="downloadAdmissionPDF(${a.id})"><i class="fas fa-file-pdf me-1"></i> Download PDF</button>
                 </div>
             </div>
@@ -385,6 +388,14 @@ async function markAdmissionRead(id) {
     await fetch('/api/admissions/' + id + '/read', {method: 'POST'});
     loadAdmissions();
     fetchNotificationCount();
+}
+
+async function updateAdmissionStatus(id, status) {
+    const response = await fetch('/api/admissions/' + id + '/status', {
+        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({status})
+    });
+    if (response.ok) showStatus('Application status updated');
+    else showStatus('Failed to update application status', true);
 }
 
 // ============================================================
@@ -417,12 +428,17 @@ async function loadPosts() {
                         <div>
                             <strong>${p.title || 'Untitled'}</strong>
                             <span class="badge bg-danger ms-2">${postCatLabels[p.category] || 'News'}</span>
+                            ${p.featured ? '<span class="badge bg-warning text-dark ms-1">Featured</span>' : ''}
+                            ${p.status === 'draft' ? '<span class="badge bg-secondary ms-1">Draft</span>' : ''}
                         </div>
                         <small class="text-muted">${p.date || ''}</small>
                     </div>
                     <div class="text-muted mt-1 small">${(p.content || '').substring(0, 120)}${(p.content || '').length > 120 ? '…' : ''}</div>
                 </div>
-                <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="deletePost(${p.id})"><i class="fas fa-trash-alt me-1"></i> Delete</button>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="editPost(${p.id})"><i class="fas fa-pen me-1"></i> Edit</button>
+                    <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="deletePost(${p.id})"><i class="fas fa-trash-alt me-1"></i> Delete</button>
+                </div>
             </div>`;
         }).join('');
     } catch(e) {
@@ -435,6 +451,10 @@ async function publishPost() {
     const category = document.getElementById('post_category').value;
     const content = document.getElementById('post_content').value.trim();
     const imageInput = document.getElementById('post_image_input');
+    const author = document.getElementById('post_author')?.value.trim();
+    const status = document.getElementById('post_status')?.value || 'published';
+    const scheduled_for = document.getElementById('post_scheduled_for')?.value || '';
+    const featured = document.getElementById('post_featured')?.checked || false;
 
     if (!title || !content) {
         showStatus('Please provide both a title and content.', true);
@@ -459,7 +479,7 @@ async function publishPost() {
         const res = await fetch('/api/posts', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title, category, content, image_path })
+            body: JSON.stringify({ title, category, content, image_path, author, status, scheduled_for, featured })
         });
         const result = await res.json();
         if (res.ok && result.success) {
@@ -473,6 +493,49 @@ async function publishPost() {
         }
     } catch(e) {
         showStatus('Server error during publish', true);
+    }
+}
+
+async function editPost(id) {
+    const response = await fetch('/api/posts');
+    const result = await response.json();
+    const post = (result.data || []).find(item => item.id === id);
+    if (!post) return showStatus('Post not found', true);
+
+    document.getElementById('post_title').value = post.title || '';
+    document.getElementById('post_category').value = post.category || 'news';
+    document.getElementById('post_content').value = post.content || '';
+    document.getElementById('post_author').value = post.author || '';
+    document.getElementById('post_status').value = post.status || 'published';
+    document.getElementById('post_scheduled_for').value = post.scheduled_for || '';
+    document.getElementById('post_featured').checked = Boolean(post.featured);
+
+    const publishButton = document.querySelector('[onclick="publishPost()"]');
+    publishButton.innerHTML = '<i class="fas fa-save me-2"></i> Save Post';
+    publishButton.onclick = () => saveEditedPost(id, post.image_path || '');
+    document.getElementById('post_title').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+async function saveEditedPost(id, existingImagePath) {
+    const data = {
+        title: document.getElementById('post_title').value.trim(),
+        category: document.getElementById('post_category').value,
+        content: document.getElementById('post_content').value.trim(),
+        author: document.getElementById('post_author').value.trim(),
+        status: document.getElementById('post_status').value,
+        scheduled_for: document.getElementById('post_scheduled_for').value,
+        featured: document.getElementById('post_featured').checked,
+        image_path: existingImagePath
+    };
+    const response = await fetch('/api/posts/' + id, {
+        method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)
+    });
+    const result = await response.json();
+    if (response.ok && result.success) {
+        showStatus('Post updated successfully');
+        window.location.reload();
+    } else {
+        showStatus(result.message || 'Failed to update post', true);
     }
 }
 

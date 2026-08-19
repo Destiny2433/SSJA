@@ -289,6 +289,21 @@
                                     <label class="form-label">Content / Body</label>
                                     <textarea class="form-control" id="post_content" rows="4" placeholder="Write the post content here..."></textarea>
                                 </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Author</label>
+                                    <input type="text" class="form-control" id="post_author" value="SS Joachim and Anne Catholic School">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Publishing</label>
+                                    <select class="form-select" id="post_status"><option value="published">Published</option><option value="draft">Draft</option></select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Schedule (optional)</label>
+                                    <input type="datetime-local" class="form-control" id="post_scheduled_for">
+                                </div>
+                                <div class="col-md-3 d-flex align-items-end">
+                                    <div class="form-check mb-2"><input class="form-check-input" type="checkbox" id="post_featured"><label class="form-check-label" for="post_featured">Featured post</label></div>
+                                </div>
                                 <div class="col-12 text-end">
                                     <button class="btn btn-danger rounded-pill px-4" onclick="publishPost()">
                                         <i class="fas fa-paper-plane me-2"></i> Publish Post

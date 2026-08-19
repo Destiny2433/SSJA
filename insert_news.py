@@ -1,25 +1,28 @@
 """One-off script to insert the 4 requested news posts into the posts table."""
 import time
-import psycopg2
-from psycopg2.extras import RealDictCursor
 
-DB_HOST = 'dpg-d98ddbvavr4c739booh0-a.oregon-postgres.render.com'
-DB_PORT = 5432
-DB_USER = 'ssja_database_systemdb_user'
-DB_PASSWORD = 'KBoFTl9aAXEWLpKcfN2hz9bzLGUUgyij'
-DB_NAME = 'ssja_database_systemdb'
+from firestore_placeholder import get_placeholder_store
 
+import os
+from dotenv import load_dotenv
 
-def get_db_connection():
-    return psycopg2.connect(
-        host=DB_HOST,
-        port=DB_PORT,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        dbname=DB_NAME,
-        cursor_factory=RealDictCursor,
-        sslmode='require',
-    )
+load_dotenv()
+
+FIREBASE_CREDENTIAL_PATH = os.environ.get(
+    'FIREBASE_CREDENTIAL_PATH',
+    'destiny-c7cd4-firebase-adminsdk-ad232-3fdac99d15.json'
+)
+
+_firestore_client = None
+
+try:
+    import firebase_admin
+    from firebase_admin import credentials, firestore as fs
+except ImportError:
+    firebase_admin = None
+    credentials = None
+    fs = None
+
 
 
 POSTS = [

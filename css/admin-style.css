@@ -16,6 +16,80 @@
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.dashboard-body {
+    background:
+        radial-gradient(circle at 85% 0%, rgba(37, 99, 235, 0.08), transparent 28rem),
+        var(--bg-light);
+}
+
+.dashboard-body .navbar {
+    background: linear-gradient(110deg, #0f2742 0%, #173f68 55%, #2563a5 100%) !important;
+    border-bottom: 3px solid var(--secondary-color);
+}
+
+.dashboard-body .navbar-brand {
+    letter-spacing: 0.08em;
+    font-size: 0.9rem;
+}
+
+.dashboard-body > .container {
+    max-width: 1480px;
+}
+
+.dashboard-body h2 {
+    color: #102a43;
+    letter-spacing: -0.02em;
+}
+
+.admin-card {
+    border: 1px solid rgba(226, 232, 240, 0.95) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 10px 30px rgba(15, 39, 66, 0.06) !important;
+    overflow: hidden;
+}
+
+.admin-card .card-header {
+    border-bottom: 1px solid var(--border-color) !important;
+    background: linear-gradient(180deg, #ffffff, #fbfdff) !important;
+}
+
+.admin-card .card-header h5 {
+    letter-spacing: -0.01em;
+}
+
+.admin-card .card-body > .p-4,
+.admin-card .card-body .bg-light {
+    background: #f8fbff !important;
+    border-color: #dbe7f3 !important;
+}
+
+.dashboard-body .btn {
+    border-radius: 8px !important;
+}
+
+.dashboard-body .btn-primary {
+    background: linear-gradient(135deg, #2563eb, #174ea6);
+}
+
+.dashboard-body .form-control,
+.dashboard-body .form-select {
+    border-radius: 8px;
+    border-width: 1px;
+    background: #fff;
+}
+
+.dashboard-body .image-upload-wrapper {
+    border-color: #dbe7f3 !important;
+    background: #f8fbff !important;
+}
+
+#statusMessage {
+    position: sticky;
+    top: 76px;
+    z-index: 10;
+    box-shadow: var(--card-shadow);
+}
+
 body {
     font-family: 'Inter', sans-serif;
     background-color: var(--bg-light);

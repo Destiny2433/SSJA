@@ -28,3 +28,10 @@ images/uploads/*
 .env
 *.env.local
 
+# Firebase / service account secrets
+*firebase*.json
+*google-services*.json
+*service-account*.json
+*adminsdk*.json
+firebase-*.json
+

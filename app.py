@@ -1,252 +1,138 @@
 import os
 import json
 import time
+import uuid
+from datetime import datetime
+from pathlib import Path
 
-import psycopg2
-from psycopg2.extras import RealDictCursor
 from flask import Flask, request, jsonify, send_from_directory, session, redirect
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
+from firestore_placeholder import get_placeholder_store
+
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'joacim_super_secret_key')
 
-UPLOAD_FOLDER = 'images/uploads'
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+BASE_DIR = Path(__file__).resolve().parent
+UPLOAD_FOLDER = BASE_DIR / 'images' / 'uploads'
+UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
 
-# --- PostgreSQL Config (full switch) ---
-DB_HOST = os.getenv('DB_HOST', 'dpg-d98ddbvavr4c739booh0-a.oregon-postgres.render.com')
-DB_PORT = int(os.getenv('DB_PORT', '5432'))
-DB_USER = os.getenv('DB_USER', 'ssja_database_systemdb_user')
-DB_PASSWORD = os.getenv('DB_PASSWORD', 'KBoFTl9aAXEWLpKcfN2hz9bzLGUUgyij')
-DB_NAME = os.getenv('DB_NAME', 'ssja_database_systemdb')
+from dotenv import load_dotenv
+
+load_dotenv()
+
+FIREBASE_CREDENTIAL_PATH = os.environ.get(
+    'FIREBASE_CREDENTIAL_PATH',
+    str(BASE_DIR / 'great-worship-firebase-adminsdk-cyj0x-110600c06e.json')
+)
+
+_firestore_client = None
+
+try:
+    import firebase_admin
+    from firebase_admin import credentials, firestore as fs
+except ImportError:
+    firebase_admin = None
+    credentials = None
+    fs = None
 
 
-def get_db_connection():
-    return psycopg2.connect(
-        host=DB_HOST,
-        port=DB_PORT,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        dbname=DB_NAME,
-        cursor_factory=RealDictCursor,
-        sslmode='require',
-    )
+def initialize_firebase():
+    global _firestore_client
+    if firebase_admin is None or not os.path.exists(FIREBASE_CREDENTIAL_PATH):
+        return False
+    try:
+        if not firebase_admin._apps:
+            firebase_admin.initialize_app(credentials.Certificate(FIREBASE_CREDENTIAL_PATH))
+        _firestore_client = fs.client()
+        return True
+    except Exception as exc:
+        print(f"Firebase initialization failed: {exc}")
+        return False
 
 
-# VAPID Keys for Push Notifications
+STORE = get_placeholder_store()
+initialize_firebase()
+
 VAPID_PUBLIC_KEY = "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U"
 VAPID_PRIVATE_KEY = "uycSJxLNFTqGfzxvLT1i2mTPJqB3mcZs29_mS4h6E6g"
 VAPID_CLAIMS = {"sub": "mailto:admin@sjacs.edu.ng"}
 
-def init_postgres():
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS admins (
-            id SERIAL PRIMARY KEY,
-            username TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL
-        )
-        """
-    )
-
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS content (
-            key TEXT PRIMARY KEY,
-            value TEXT NOT NULL
-        )
-        """
-    )
-
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS gallery (
-            id SERIAL PRIMARY KEY,
-            category TEXT NOT NULL,
-            image_path TEXT NOT NULL,
-            title TEXT,
-            description TEXT
-        )
-        """
-    )
-
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS messages (
-            id SERIAL PRIMARY KEY,
-            name TEXT,
-            email TEXT,
-            subject TEXT,
-            message TEXT,
-            is_read INTEGER DEFAULT 0,
-            submitted_at TEXT
-        )
-        """
-    )
-
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS admissions (
-            id SERIAL PRIMARY KEY,
-            student_name TEXT,
-            date_of_birth TEXT,
-            gender TEXT,
-            class_applying TEXT,
-            parent_name TEXT,
-            parent_phone TEXT,
-            parent_email TEXT,
-            address TEXT,
-            is_read INTEGER DEFAULT 0,
-            submitted_at TEXT,
-            session_term TEXT,
-            nationality TEXT,
-            student_home_address TEXT,
-            previous_school TEXT,
-            parent_relationship TEXT,
-            parent_occupation TEXT,
-            parent_home_address TEXT,
-            emergency_contact_name TEXT,
-            emergency_contact_phone TEXT,
-            emergency_contact_relationship TEXT,
-            blood_group TEXT,
-            allergies_medical_conditions TEXT,
-            parent_signature TEXT,
-            signature_date TEXT,
-            passport_photo_path TEXT
-        )
-        """
-    )
-
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS posts (
-            id SERIAL PRIMARY KEY,
-            title TEXT NOT NULL,
-            category TEXT DEFAULT 'news',
-            content TEXT NOT NULL,
-            image_path TEXT DEFAULT '',
-            date TEXT
-        )
-        """
-    )
-
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS push_subscriptions (
-            id SERIAL PRIMARY KEY,
-            subscription_json TEXT UNIQUE NOT NULL
-        )
-        """
-    )
-
-    # Seed admin user if not present
-    cur.execute("SELECT 1 FROM admins WHERE username = %s", ('admin',))
-    if not cur.fetchone():
-        hashed_pw = generate_password_hash('admin123')
-        cur.execute(
-            "INSERT INTO admins (username, password_hash) VALUES (%s, %s)",
-            ('admin', hashed_pw),
-        )
-
-    conn.commit()
-    cur.close()
-    conn.close()
+PAGES = {
+    'index', 'about', 'academics', 'education-facilities', 'education-staff',
+    'education-anthem', 'disciplinary-measures', 'school-rules-regulations',
+    'admissions', 'admission-form', 'gallery', 'contact', 'admin',
+    'admin-dashboard', 'news'
+}
 
 
-init_postgres()
+def get_store():
+    return STORE
+
+
+def save_store():
+    if _firestore_client is not None:
+        try:
+            _firestore_client.collection('site_data').document('store').set(STORE)
+        except Exception as exc:
+            print(f"Failed to sync store to Firestore: {exc}")
+
+
+def get_next_id(items):
+    return max((item.get('id', 0) for item in items), default=0) + 1
 
 
 def send_push_notification(title, body, url='/admin-dashboard'):
-    """Send push notification to all subscribed admin devices."""
     try:
         from pywebpush import webpush
-
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("SELECT subscription_json FROM push_subscriptions")
-        rows = cur.fetchall()
-        conn.close()
-
-        for (subscription_json,) in rows:
+        for subscription_json in get_store().get('push_subscriptions', []):
             try:
-                subscription_info = json.loads(subscription_json)
                 webpush(
-                    subscription_info=subscription_info,
+                    subscription_info=json.loads(subscription_json),
                     data=json.dumps({"title": title, "body": body, "url": url}),
                     vapid_private_key=VAPID_PRIVATE_KEY,
                     vapid_claims=VAPID_CLAIMS,
                 )
-            except Exception as e:
-                print(f"Push failed for subscription: {e}")
+            except Exception as exc:
+                print(f"Push failed for subscription: {exc}")
     except ImportError:
         print("pywebpush not installed. Skipping push notifications.")
 
 
-# --- Static File Routes ---
-PAGES = [
-    'index', 'about', 'academics',
-    'education-facilities', 'education-staff', 'education-anthem',
-    'disciplinary-measures', 'school-rules-regulations',
-    'academics-calendar', 'academics-curriculum', 'academics-jss-subjects',
-    'academics-senior-secondary', 'academics-extra-curricular', 'academics-fees',
-    'admissions', 'admission-form', 'pay-fees', 'gallery', 'contact', 'admin', 'admin-dashboard', 'news'
-]
-
-
 @app.route('/')
-def index():
-    return send_from_directory('.', 'index.html')
+def index_page():
+    return send_from_directory(BASE_DIR, 'index.html')
 
 
 @app.route('/<page>')
-def serve_page(page):
+def page_route(page):
     if page == 'admin-dashboard' and not session.get('admin_logged_in'):
         return redirect('/admin')
-
     if page in PAGES:
-        return send_from_directory('.', f'{page}.html')
-
-    if page == 'admin-dashboard.html' and not session.get('admin_logged_in'):
-        return redirect('/admin')
-
+        return send_from_directory(BASE_DIR, f'{page}.html')
     if page.endswith(('.py', '.db', '.md')) or page.startswith('.'):
-        return "Forbidden", 403
-    return send_from_directory('.', page)
+        return 'Forbidden', 403
+    return send_from_directory(BASE_DIR, page)
 
 
 @app.route('/<path:filename>')
-def serve_static(filename):
+def static_route(filename):
     if filename == 'admin-dashboard.html' and not session.get('admin_logged_in'):
         return redirect('/admin')
-
     if filename.endswith(('.py', '.db', '.md')) or filename.startswith('.'):
-        return "Forbidden", 403
-    return send_from_directory('.', filename)
+        return 'Forbidden', 403
+    return send_from_directory(BASE_DIR, filename)
 
 
-# --- Auth ---
 @app.route('/api/login', methods=['POST'])
 def login():
-    try:
-        data = request.get_json() or {}
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute('SELECT * FROM admins WHERE username = %s', (data.get('username'),))
-        admin = cur.fetchone()
-        conn.close()
-
-        if admin and check_password_hash(admin['password_hash'], data.get('password', '')):
-            session['admin_logged_in'] = True
-            return jsonify({"success": True})
-
-        return jsonify({"success": False, "message": "Invalid username or password"}), 401
-    except Exception as e:
-        print(f"Login error: {str(e)}")
-        return jsonify({"success": False, "message": f"Server error: {str(e)}"}), 500
+    data = request.get_json() or {}
+    admin = next((a for a in get_store().get('admins', []) if a.get('username') == data.get('username')), None)
+    if admin and check_password_hash(admin['password_hash'], data.get('password', '')):
+        session['admin_logged_in'] = True
+        return jsonify({"success": True})
+    return jsonify({"success": False, "message": "Invalid username or password"}), 401
 
 
 @app.route('/api/logout', methods=['POST'])
@@ -255,28 +141,16 @@ def logout():
     return jsonify({"success": True})
 
 
-# --- Push Subscriptions ---
 @app.route('/api/subscribe', methods=['POST'])
 def subscribe():
     if not session.get('admin_logged_in'):
         return jsonify({"success": False, "message": "Unauthorized"}), 401
-
-    data = request.get_json() or {}
-    sub_json = json.dumps(data.get('subscription'))
-
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute(
-        """
-        INSERT INTO push_subscriptions (subscription_json)
-        VALUES (%s)
-        ON CONFLICT (subscription_json) DO NOTHING
-        """,
-        (sub_json,),
-    )
-    conn.commit()
-    conn.close()
-
+    subscription = request.get_json().get('subscription')
+    subscriptions = get_store().setdefault('push_subscriptions', [])
+    sub_json = json.dumps(subscription, sort_keys=True)
+    if sub_json not in subscriptions:
+        subscriptions.append(sub_json)
+        save_store()
     return jsonify({"success": True, "message": "Subscribed to push notifications"})
 
 
@@ -285,21 +159,30 @@ def get_vapid_key():
     return jsonify({"publicKey": VAPID_PUBLIC_KEY})
 
 
+@app.route('/post/<int:post_id>')
+def post_detail_page(post_id):
+    return send_from_directory(BASE_DIR, 'post-detail.html')
+
+
+@app.errorhandler(404)
+def page_not_found(error):
+    return send_from_directory(BASE_DIR, '404.html'), 404
+
+
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    return jsonify({
+        "success": True,
+        "firebase": _firestore_client is not None,
+        "storage": "firestore" if _firestore_client is not None else "local-fallback",
+    })
+
+
 # --- Content ---
 @app.route('/api/content', methods=['GET'])
 def get_all_content():
-    conn = get_db_connection()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-
-    cur.execute('SELECT * FROM content')
-    rows = cur.fetchall()
-
-    cur.execute('SELECT * FROM gallery ORDER BY id DESC')
-    gallery_rows = cur.fetchall()
-
-    conn.close()
-
-    content = {row['key']: row['value'] for row in rows}
+    store = get_store()
+    content = {row['key']: row['value'] for row in store.get('content', [])}
     content['gallery'] = [
         {
             "id": r["id"],
@@ -308,9 +191,8 @@ def get_all_content():
             "title": r.get("title") or "",
             "description": r.get("description") or "",
         }
-        for r in gallery_rows
+        for r in store.get('gallery', [])
     ]
-
     return jsonify({"success": True, "data": content})
 
 
@@ -320,26 +202,17 @@ def update_content():
         return jsonify({"success": False, "message": "Unauthorized"}), 401
 
     data = request.get_json() or {}
-
-    conn = get_db_connection()
-    cur = conn.cursor()
-
+    store = get_store()
+    existing = {row['key']: row for row in store.get('content', [])}
     for key, value in data.items():
         if key == 'gallery':
             continue
-
-        cur.execute(
-            """
-            INSERT INTO content (key, value)
-            VALUES (%s, %s)
-            ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
-            """,
-            (key, str(value)),
-        )
-
-    conn.commit()
-    conn.close()
-
+        if key in existing:
+            existing[key]['value'] = str(value)
+        else:
+            existing[key] = {'key': key, 'value': str(value)}
+    store['content'] = list(existing.values())
+    save_store()
     return jsonify({"success": True})
 
 
@@ -362,34 +235,44 @@ def upload_file():
     file.save(filepath)
 
     relative_path = f"images/uploads/{filename}"
-
-    conn = get_db_connection()
-    cur = conn.cursor()
+    store = get_store()
 
     if key == 'gallery':
         category = request.form.get('category', 'all')
         title = request.form.get('title', '')
-        cur.execute(
-            """
-            INSERT INTO gallery (category, image_path, title, description)
-            VALUES (%s, %s, %s, %s)
-            """,
-            (category, relative_path, title, ''),
-        )
+        store.setdefault('gallery', []).append({
+            "id": get_next_id(store['gallery']),
+            "category": category,
+            "image_path": relative_path,
+            "title": title,
+            "description": "",
+        })
     else:
-        cur.execute(
-            """
-            INSERT INTO content (key, value)
-            VALUES (%s, %s)
-            ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
-            """,
-            (key, relative_path),
-        )
+        existing = {row['key']: row for row in store.get('content', [])}
+        if key in existing:
+            existing[key]['value'] = relative_path
+        else:
+            existing[key] = {'key': key, 'value': relative_path}
+        store['content'] = list(existing.values())
 
-    conn.commit()
-    conn.close()
+    save_store()
 
     return jsonify({"success": True, "path": relative_path})
+
+
+@app.route('/api/admission-documents', methods=['POST'])
+def upload_admission_document():
+    file = request.files.get('file')
+    document_type = request.form.get('document_type', 'document')
+    allowed_types = {'birth_certificate', 'previous_school_report', 'passport_photograph'}
+    if not file or not file.filename:
+        return jsonify({"success": False, "message": "No document selected"}), 400
+    if document_type not in allowed_types:
+        return jsonify({"success": False, "message": "Invalid document type"}), 400
+
+    filename = f"admission_{document_type}_{uuid.uuid4().hex[:12]}_{secure_filename(file.filename)}"
+    file.save(UPLOAD_FOLDER / filename)
+    return jsonify({"success": True, "path": f"images/uploads/{filename}"})
 
 
 @app.route('/api/gallery/<int:item_id>', methods=['DELETE'])
@@ -397,12 +280,10 @@ def delete_gallery_item(item_id):
     if not session.get('admin_logged_in'):
         return jsonify({"success": False, "message": "Unauthorized"}), 401
 
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('DELETE FROM gallery WHERE id = %s', (item_id,))
-    conn.commit()
-    conn.close()
-
+    gallery = get_store().get('gallery', [])
+    updated = [item for item in gallery if item.get('id') != item_id]
+    get_store()['gallery'] = updated
+    save_store()
     return jsonify({"success": True})
 
 
@@ -412,26 +293,25 @@ def contact():
     data = request.get_json() or {}
     timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
 
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute(
-        'INSERT INTO messages (name, email, subject, message, submitted_at) VALUES (%s, %s, %s, %s, %s)',
-        (
-            data.get('name'),
-            data.get('email'),
-            data.get('subject'),
-            data.get('message'),
-            timestamp,
-        ),
-    )
-    conn.commit()
-    conn.close()
+    store = get_store()
+    messages = store.setdefault('messages', [])
+    messages.append({
+        "id": get_next_id(messages),
+        "name": data.get('name'),
+        "email": data.get('email'),
+        "subject": data.get('subject'),
+        "message": data.get('message'),
+        "is_read": 0,
+        "submitted_at": timestamp,
+    })
 
     send_push_notification(
         title="📩 New Contact Message",
         body=f"From {data.get('name', 'Someone')}: {data.get('subject', 'No subject')}",
         url="/admin-dashboard",
     )
+
+    save_store()
 
     return jsonify({"success": True, "message": "Message received!"})
 
@@ -441,13 +321,8 @@ def get_messages():
     if not session.get('admin_logged_in'):
         return jsonify({"success": False, "message": "Unauthorized"}), 401
 
-    conn = get_db_connection()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-    cur.execute('SELECT * FROM messages ORDER BY id DESC')
-    rows = cur.fetchall()
-    conn.close()
-
-    return jsonify({"success": True, "data": [dict(r) for r in rows]})
+    messages = sorted(get_store().get('messages', []), key=lambda x: x.get('id', 0), reverse=True)
+    return jsonify({"success": True, "data": messages})
 
 
 @app.route('/api/messages/<int:msg_id>/read', methods=['POST'])
@@ -455,12 +330,12 @@ def mark_message_read(msg_id):
     if not session.get('admin_logged_in'):
         return jsonify({"success": False}), 401
 
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('UPDATE messages SET is_read = 1 WHERE id = %s', (msg_id,))
-    conn.commit()
-    conn.close()
-
+    store = get_store()
+    for message in store.get('messages', []):
+        if message.get('id') == msg_id:
+            message['is_read'] = 1
+            break
+    save_store()
     return jsonify({"success": True})
 
 
@@ -469,12 +344,9 @@ def delete_message(msg_id):
     if not session.get('admin_logged_in'):
         return jsonify({"success": False}), 401
 
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('DELETE FROM messages WHERE id = %s', (msg_id,))
-    conn.commit()
-    conn.close()
-
+    store = get_store()
+    store['messages'] = [m for m in store.get('messages', []) if m.get('id') != msg_id]
+    save_store()
     return jsonify({"success": True})
 
 
@@ -484,50 +356,42 @@ def submit_admission():
     data = request.get_json() or {}
     timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
 
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute(
-        """
-        INSERT INTO admissions
-            (student_name, date_of_birth, gender, class_applying, parent_name, parent_phone, parent_email, address, submitted_at,
-             session_term, nationality, student_home_address, previous_school, parent_relationship, parent_occupation,
-             parent_home_address, emergency_contact_name, emergency_contact_phone, emergency_contact_relationship,
-             blood_group, allergies_medical_conditions, parent_signature, signature_date, passport_photo_path)
-        VALUES
-            (%s, %s, %s, %s, %s, %s, %s, %s, %s,
-             %s, %s, %s, %s, %s, %s,
-             %s, %s, %s, %s,
-             %s, %s, %s, %s, %s)
-        """,
-        (
-            data.get('student_name'),
-            data.get('date_of_birth'),
-            data.get('gender'),
-            data.get('class_applying'),
-            data.get('parent_name'),
-            data.get('parent_phone'),
-            data.get('parent_email'),
-            data.get('address'),
-            timestamp,
-            data.get('session_term'),
-            data.get('nationality'),
-            data.get('student_home_address'),
-            data.get('previous_school'),
-            data.get('parent_relationship'),
-            data.get('parent_occupation'),
-            data.get('parent_home_address'),
-            data.get('emergency_contact_name'),
-            data.get('emergency_contact_phone'),
-            data.get('emergency_contact_relationship'),
-            data.get('blood_group'),
-            data.get('allergies_medical_conditions'),
-            data.get('parent_signature'),
-            data.get('signature_date'),
-            data.get('passport_photo_path'),
-        ),
-    )
-    conn.commit()
-    conn.close()
+    store = get_store()
+    admissions = store.setdefault('admissions', [])
+    application_id = get_next_id(admissions)
+    application_number = f"SJACS-{time.strftime('%Y')}-{application_id:05d}"
+    admissions.append({
+        "id": application_id,
+        "application_number": application_number,
+        "status": "Submitted",
+        "student_name": data.get('student_name'),
+        "date_of_birth": data.get('date_of_birth'),
+        "gender": data.get('gender'),
+        "class_applying": data.get('class_applying'),
+        "parent_name": data.get('parent_name'),
+        "parent_phone": data.get('parent_phone'),
+        "parent_email": data.get('parent_email'),
+        "address": data.get('address'),
+        "is_read": 0,
+        "submitted_at": timestamp,
+        "session_term": data.get('session_term'),
+        "nationality": data.get('nationality'),
+        "student_home_address": data.get('student_home_address'),
+        "previous_school": data.get('previous_school'),
+        "parent_relationship": data.get('parent_relationship'),
+        "parent_occupation": data.get('parent_occupation'),
+        "parent_home_address": data.get('parent_home_address'),
+        "emergency_contact_name": data.get('emergency_contact_name'),
+        "emergency_contact_phone": data.get('emergency_contact_phone'),
+        "emergency_contact_relationship": data.get('emergency_contact_relationship'),
+        "blood_group": data.get('blood_group'),
+        "allergies_medical_conditions": data.get('allergies_medical_conditions'),
+        "parent_signature": data.get('parent_signature'),
+        "signature_date": data.get('signature_date'),
+        "passport_photo_path": data.get('passport_photo_path'),
+        "birth_certificate_path": data.get('birth_certificate_path', ''),
+        "previous_school_report_path": data.get('previous_school_report_path', ''),
+    })
 
     send_push_notification(
         title="🎓 New Admission Application",
@@ -535,7 +399,13 @@ def submit_admission():
         url="/admin-dashboard",
     )
 
-    return jsonify({"success": True, "message": "Application submitted successfully!"})
+    save_store()
+
+    return jsonify({
+        "success": True,
+        "message": "Application submitted successfully!",
+        "application_number": application_number,
+    })
 
 
 @app.route('/api/admissions', methods=['GET'])
@@ -543,13 +413,8 @@ def get_admissions():
     if not session.get('admin_logged_in'):
         return jsonify({"success": False, "message": "Unauthorized"}), 401
 
-    conn = get_db_connection()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-    cur.execute('SELECT * FROM admissions ORDER BY id DESC')
-    rows = cur.fetchall()
-    conn.close()
-
-    return jsonify({"success": True, "data": [dict(r) for r in rows]})
+    admissions = sorted(get_store().get('admissions', []), key=lambda x: x.get('id', 0), reverse=True)
+    return jsonify({"success": True, "data": admissions})
 
 
 @app.route('/api/admissions/<int:app_id>/read', methods=['POST'])
@@ -557,82 +422,157 @@ def mark_admission_read(app_id):
     if not session.get('admin_logged_in'):
         return jsonify({"success": False}), 401
 
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('UPDATE admissions SET is_read = 1 WHERE id = %s', (app_id,))
-    conn.commit()
-    conn.close()
-
+    store = get_store()
+    for admission in store.get('admissions', []):
+        if admission.get('id') == app_id:
+            admission['is_read'] = 1
+            break
+    save_store()
     return jsonify({"success": True})
+
+
+@app.route('/api/admissions/<int:app_id>/status', methods=['POST'])
+def update_admission_status(app_id):
+    if not session.get('admin_logged_in'):
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+    status = (request.get_json() or {}).get('status')
+    valid_statuses = {'Submitted', 'Under Review', 'Accepted', 'Rejected', 'Waitlisted'}
+    if status not in valid_statuses:
+        return jsonify({"success": False, "message": "Invalid application status"}), 400
+    for admission in get_store().get('admissions', []):
+        if admission.get('id') == app_id:
+            admission['status'] = status
+            admission['status_updated_at'] = time.strftime('%Y-%m-%d %H:%M:%S')
+            save_store()
+            return jsonify({"success": True, "data": admission})
+    return jsonify({"success": False, "message": "Application not found"}), 404
+
+
+@app.route('/api/applicant/<application_number>', methods=['GET'])
+def applicant_dashboard(application_number):
+    admission = next((item for item in get_store().get('admissions', [])
+                      if item.get('application_number') == application_number), None)
+    if not admission:
+        return jsonify({"success": False, "message": "Application not found"}), 404
+    return jsonify({"success": True, "data": {
+        "application_number": admission.get('application_number'),
+        "student_name": admission.get('student_name'),
+        "class_applying": admission.get('class_applying'),
+        "status": admission.get('status', 'Submitted'),
+        "submitted_at": admission.get('submitted_at'),
+    }})
+
+
+@app.route('/admission-dashboard')
+def admission_dashboard_page():
+    return send_from_directory('.', 'applicant-dashboard.html')
+
+
+@app.route('/admission-letter/<int:app_id>')
+def admission_letter(app_id):
+    if not session.get('admin_logged_in'):
+        return redirect('/admin')
+    admission = next((item for item in get_store().get('admissions', []) if item.get('id') == app_id), None)
+    if not admission:
+        return 'Application not found', 404
+    if admission.get('status') != 'Accepted':
+        return 'An admission letter is available only for accepted applications.', 409
+    html = f'''<!doctype html><html><head><meta charset="utf-8"><title>Admission Letter - {admission.get('application_number')}</title><style>body{{font-family:Georgia,serif;max-width:760px;margin:50px auto;line-height:1.7;color:#172b4d}}.header{{text-align:center;border-bottom:3px solid #c99a2e;padding-bottom:20px}}.content{{padding:35px 10px}}.sign{{margin-top:60px}}@media print{{.print{{display:none}}}}</style></head><body><button class="print" onclick="window.print()">Print / Save as PDF</button><div class="header"><h1>SS. JOACHIM AND ANNE CATHOLIC SCHOOL</h1><p>412 Road, Gowon Estate, Lagos</p><h2>ADMISSION LETTER</h2></div><div class="content"><p>Date: {time.strftime('%d %B %Y')}</p><p>Dear Parent/Guardian,</p><p>We are pleased to offer <strong>{admission.get('student_name', '')}</strong> admission into <strong>{admission.get('class_applying', '')}</strong> for the coming academic session.</p><p>Application number: <strong>{admission.get('application_number', '')}</strong></p><p>Please contact the school office to complete registration and submit any outstanding requirements.</p><div class="sign"><p>Yours faithfully,</p><p><strong>School Administration</strong></p></div></div></body></html>'''
+    return html
 
 
 # --- News / Blog / Events ---
 @app.route('/api/posts', methods=['GET'])
 def get_posts():
-    
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-    cur.execute('SELECT * FROM posts ORDER BY id DESC')
-    rows = cur.fetchall()
-    conn.close()
-    return jsonify({"success": True, "data": [dict(r) for r in rows]})
+    now = datetime.now().isoformat(timespec='minutes')
+    posts = [p for p in get_store().get('posts', [])
+             if p.get('status', 'published') == 'published'
+             and (not p.get('scheduled_for') or p['scheduled_for'] <= now)]
+    posts = sorted(posts, key=lambda x: x.get('id', 0), reverse=True)
+    return jsonify({"success": True, "data": posts})
 
 
 @app.route('/api/posts/<int:post_id>', methods=['GET'])
 def get_post(post_id):
-    
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-    cur.execute('SELECT * FROM posts WHERE id = %s', (post_id,))
-    row = cur.fetchone()
-    conn.close()
-    if not row:
-    
-    return jsonify({"success": True, "data": dict(row)})
+    post = next((p for p in get_store().get('posts', []) if p.get('id') == post_id), None)
+    if not post:
+        return jsonify({"success": False, "error": "Post not found"}), 404
+    post.pop('views', None)
+    post.pop('comments', None)
+    return jsonify({"success": True, "data": post})
 
 
 @app.route('/api/posts', methods=['POST'])
 def create_post():
-    @app.route('/api/posts/<int:post_id>', methods=['DELETE'])
+    if not session.get('admin_logged_in'):
         return jsonify({"success": False, "message": "Unauthorized"}), 401
 
     data = request.get_json() or {}
-    timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+    if not data.get('title'):
+        return jsonify({"success": False, "message": "Title is required"}), 400
+    if not data.get('content'):
+        return jsonify({"success": False, "message": "Content is required"}), 400
 
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute(
-        """
-        INSERT INTO posts (title, category, content, image_path, date)
-        VALUES (%s, %s, %s, %s, %s)
-        """,
-        (
-            data.get('title'),
-            data.get('category', 'news'),
-            data.get('content'),
-            data.get('image_path', ''),
-            data.get('date') or timestamp,
-        ),
-    )
-    conn.commit()
-    conn.close()
+    store = get_store()
+    posts = store.setdefault('posts', [])
+    new_post = {
+        'id': get_next_id(posts),
+        'title': data.get('title'),
+        'category': data.get('category', 'news'),
+        'content': data.get('content'),
+        'image_path': data.get('image_path', ''),
+        'date': data.get('date') or time.strftime('%Y-%m-%d %H:%M:%S'),
+        'author': data.get('author', 'SS Joachim and Anne Catholic School'),
+        'featured': bool(data.get('featured', False)),
+        'status': data.get('status', 'published'),
+        'scheduled_for': data.get('scheduled_for', ''),
+    }
+    posts.append(new_post)
 
     send_push_notification(
         title="📰 New Post Published",
-        body=f"{data.get('title', 'New post')}",
-        url="/admin-dashboard",
+        body=data.get('title', 'New post'),
+        url="/admin-dashboard"
     )
 
-    return jsonify({"success": True, "message": "Post created!"})
+    save_store()
+
+    return jsonify({"success": True, "message": "Post created!", "data": new_post}), 201
+
+
+@app.route('/api/posts/<int:post_id>', methods=['PUT'])
+def update_post(post_id):
+    if not session.get('admin_logged_in'):
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+
+    data = request.get_json() or {}
+    for post in get_store().get('posts', []):
+        if post.get('id') == post_id:
+            for key in ('title', 'category', 'content', 'image_path', 'author', 'status', 'scheduled_for'):
+                if key in data:
+                    post[key] = data[key]
+            if 'featured' in data:
+                post['featured'] = bool(data['featured'])
+            post.pop('views', None)
+            post.pop('comments', None)
+            save_store()
+            return jsonify({"success": True, "message": "Post updated", "data": post})
+    return jsonify({"success": False, "message": "Post not found"}), 404
+
+
+@app.route('/api/posts/<int:post_id>', methods=['DELETE'])
 def delete_post(post_id):
     if not session.get('admin_logged_in'):
-        return jsonify({"success": False}), 401
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
 
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('DELETE FROM posts WHERE id = %s', (post_id,))
-    conn.commit()
-    conn.close()
-
-    return jsonify({"success": True})
+    store = get_store()
+    posts = store.get('posts', [])
+    new_posts = [p for p in posts if p.get('id') != post_id]
+    if len(new_posts) == len(posts):
+        return jsonify({"success": False, "message": "Post not found"}), 404
+    store['posts'] = new_posts
+    save_store()
+    return jsonify({"success": True, "message": "Post deleted successfully"})
 
 
 # --- Notification Count ---
@@ -641,16 +581,9 @@ def get_notifications():
     if not session.get('admin_logged_in'):
         return jsonify({"success": False}), 401
 
-    conn = get_db_connection()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-
-    cur.execute('SELECT COUNT(*) AS c FROM messages WHERE is_read = 0')
-    unread_messages = cur.fetchone()['c']
-
-    cur.execute('SELECT COUNT(*) AS c FROM admissions WHERE is_read = 0')
-    unread_admissions = cur.fetchone()['c']
-
-    conn.close()
+    store = get_store()
+    unread_messages = sum(1 for m in store.get('messages', []) if m.get('is_read') == 0)
+    unread_admissions = sum(1 for a in store.get('admissions', []) if a.get('is_read') == 0)
 
     return jsonify(
         {
@@ -665,4 +598,3 @@ def get_notifications():
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
-

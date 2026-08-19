@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Not Found | SS Joachim and Anne</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --navy: #123460; --gold: #d5a83b; --ink: #182b3f; --paper: #f7f4ed; }
+        * { box-sizing: border-box; }
+        body { min-height: 100vh; margin: 0; display: grid; place-items: center; color: var(--ink); background: radial-gradient(circle at 15% 15%, #fff 0 10%, transparent 35%), var(--paper); font-family: 'DM Sans', sans-serif; }
+        .page { width: min(920px, calc(100% - 40px)); padding: 34px; position: relative; overflow: hidden; background: rgba(255,255,255,.86); border: 1px solid rgba(18,52,96,.12); box-shadow: 0 24px 70px rgba(18,52,96,.12); }
+        .page::after { content: '✦'; position: absolute; right: 35px; top: 15px; color: var(--gold); font-size: 5rem; opacity: .25; }
+        .brand { display: flex; align-items: center; gap: 12px; color: var(--navy); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; font-size: .78rem; }
+        .brand img { width: 56px; height: 56px; object-fit: contain; }
+        .content { max-width: 620px; padding: 64px 0 34px; }
+        .number { margin: 0; color: var(--gold); font-size: clamp(5rem, 15vw, 9rem); line-height: .85; font-weight: 700; letter-spacing: -.08em; }
+        h1 { margin: 25px 0 12px; color: var(--navy); font: 700 clamp(2rem, 5vw, 3.8rem)/1.05 'Playfair Display', serif; }
+        p { color: #5e6c78; font-size: 1.05rem; line-height: 1.7; max-width: 520px; }
+        .links { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
+        a { padding: 13px 20px; text-decoration: none; border: 1px solid var(--navy); color: var(--navy); font-weight: 700; transition: .2s ease; }
+        a.primary { background: var(--navy); color: white; }
+        a:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(18,52,96,.15); }
+        @media (max-width: 600px) { .page { padding: 24px; } .content { padding-top: 48px; } }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <div class="brand"><img src="images/logo.png" alt="SS Joachim and Anne logo"><span>SS Joachim and Anne Catholic School</span></div>
+        <section class="content">
+            <div class="number">404</div>
+            <h1>This page took a little detour.</h1>
+            <p>The page you are looking for is not here, but there is plenty more to discover across our school community.</p>
+            <div class="links"><a class="primary" href="/"><i class="fas fa-house me-2"></i>Return home</a><a href="/news"><i class="fas fa-newspaper me-2"></i>Read school news</a></div>
+        </section>
+    </main>
+</body>
+</html>
