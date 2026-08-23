@@ -1,4 +1,4 @@
-const CACHE_NAME = "my-pwa-v1";
+const CACHE_NAME = "sjacs-public-v3";
 
 const urlsToCache = [
   "/",
@@ -42,18 +42,8 @@ self.addEventListener("activate", event => {
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
 
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Return cached response if found
-        if (response) {
-          return response;
-        }
-
-        // Clone the request because it's a one-time use stream
-        const fetchRequest = event.request.clone();
-
-        return fetch(fetchRequest).then(response => {
+  // Network-first keeps published pages fresh while retaining offline support.
+  event.respondWith(fetch(event.request).then(response => {
           // Check if we received a valid response
           if (!response || response.status !== 200 || response.type !== 'basic') {
             return response;
@@ -67,10 +57,6 @@ self.addEventListener("fetch", event => {
               cache.put(event.request, responseToCache);
             });
 
-          return response;
-        }).catch(() => {
-          // If offline, maybe return an offline page here, but basic offline caching covers visited pages.
-        });
-      })
-  );
+    return response;
+  }).catch(() => caches.match(event.request)));
 });

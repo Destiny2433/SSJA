@@ -53,16 +53,53 @@
     </nav>
 
     <div class="container py-5">
-        <div class="row mb-5 align-items-end">
-            <div class="col-md-8">
-                <h2 class="fw-bold mb-1">Dashboard Overview</h2>
-                <p class="text-muted mb-0">Manage website content, images, and global settings dynamically.</p>
+        <div class="admin-hero mb-4">
+            <div class="row align-items-center g-4">
+                <div class="col-lg-8">
+                    <div class="d-inline-flex align-items-center gap-2 admin-kicker mb-3">
+                        <span class="admin-kicker-dot"></span>
+                        <span>School Content Operations</span>
+                    </div>
+                    <h2 class="fw-bold mb-2">Dashboard Overview</h2>
+                    <p class="text-muted mb-0">Manage website content, images, admissions, and news from one central workspace.</p>
+                </div>
+                <div class="col-lg-4 text-lg-end">
+                    <button class="btn btn-primary rounded-pill shadow-sm px-4 py-2" onclick="saveAllSettings()">
+                        <i class="fas fa-save me-2"></i> Save All Changes
+                    </button>
+                </div>
             </div>
-            <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                <button class="btn btn-primary rounded-pill shadow-sm px-4" onclick="saveAllSettings()">
-                    <i class="fas fa-save me-2"></i> Save All Changes
-                </button>
+            <div class="row g-3 mt-4 admin-metrics">
+                <div class="col-md-4">
+                    <div class="metric-card">
+                        <div class="metric-icon bg-primary-subtle text-primary"><i class="fas fa-layer-group"></i></div>
+                        <div>
+                            <div class="metric-label">Content Areas</div>
+                            <div class="metric-value">7 sections</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="metric-card">
+                        <div class="metric-icon bg-warning-subtle text-warning"><i class="fas fa-images"></i></div>
+                        <div>
+                            <div class="metric-label">Media Library</div>
+                            <div class="metric-value">Gallery + uploads</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="metric-card">
+                        <div class="metric-icon bg-success-subtle text-success"><i class="fas fa-inbox"></i></div>
+                        <div>
+                            <div class="metric-label">Live Signals</div>
+                            <div class="metric-value">Messages & admissions</div>
+                        </div>
+                    </div>
+                </div>
             </div>
+
+            <div class="col-lg-12"><div class="card admin-card border-0 shadow-sm"><div class="card-header bg-white border-0 pt-4 pb-0 px-4"><h5 class="fw-bold text-primary">Academic pages</h5></div><div class="card-body p-4 row g-3"><div class="col-md-6"><label class="form-label">Rules &amp; regulations</label><textarea id="school_rules" class="form-control" rows="4"></textarea></div><div class="col-md-6"><label class="form-label">Educational facilities</label><textarea id="education_facilities" class="form-control" rows="4"></textarea></div><div class="col-md-6"><label class="form-label">Disciplinary measures</label><textarea id="disciplinary_measures" class="form-control" rows="4" placeholder="Teacher warning, parent call, suspension, expulsion"></textarea></div><div class="col-md-6"><label class="form-label">School anthem</label><textarea id="school_anthem" class="form-control" rows="4"></textarea></div><div class="col-12"><label class="form-label">JSS subjects</label><textarea id="jss_subjects" class="form-control" rows="3"></textarea></div></div></div></div>
         </div>
 
         <div id="statusMessage" class="alert d-none mb-4" role="alert"></div>

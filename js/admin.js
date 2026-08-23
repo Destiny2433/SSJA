@@ -104,7 +104,7 @@ async function loadDashboardData() {
             const data = resData.data;
             
             // Populate text fields
-            const fields = ['academic_year', 'current_term', 'about_intro', 'about_mission', 'about_vision', 'priest_description', 'headboy_name', 'headgirl_name'];
+            const fields = ['academic_year', 'current_term', 'about_intro', 'about_mission', 'about_vision', 'priest_description', 'headboy_name', 'headgirl_name', 'school_rules', 'education_facilities', 'disciplinary_measures', 'school_anthem', 'jss_subjects'];
             fields.forEach(f => {
                 if (document.getElementById(f)) document.getElementById(f).value = data[f] || '';
             });
@@ -153,7 +153,12 @@ async function saveAllSettings() {
         about_vision: document.getElementById('about_vision')?.value,
         priest_description: document.getElementById('priest_description')?.value,
         headboy_name: document.getElementById('headboy_name')?.value,
-        headgirl_name: document.getElementById('headgirl_name')?.value
+        headgirl_name: document.getElementById('headgirl_name')?.value,
+        school_rules: document.getElementById('school_rules')?.value,
+        education_facilities: document.getElementById('education_facilities')?.value,
+        disciplinary_measures: document.getElementById('disciplinary_measures')?.value,
+        school_anthem: document.getElementById('school_anthem')?.value,
+        jss_subjects: document.getElementById('jss_subjects')?.value
     };
     
     try {

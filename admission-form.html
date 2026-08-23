@@ -257,9 +257,9 @@
 </head>
 <body>
     <header class="sticky-top">
-        <nav class="navbar navbar-expand-lg nacba  light bg-white">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white">
             <div class="container">
-                <a classs="navbar-brand" href="index.html">
+                <a class="navbar-brand" href="index.html">
                     <img src="images/logo.png" alt="School Logo" height="50">
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -272,6 +272,9 @@
                        <li class="nav-item"><a class="nav-link" href="academics">Academics</a></li>
                        <li class="nav-item"><a class="nav-link" href="admissions">Admissions</a></li>
                        <li class="nav-item"><a class="nav-link" href="admission-form">Admission Form</a></li>
+                       <li class="nav-item"><a class="nav-link" href="school-rules-regulations">Rules</a></li>
+                       <li class="nav-item"><a class="nav-link" href="education-facilities">Facilities</a></li>
+                       <li class="nav-item"><a class="nav-link" href="disciplinary-measures">Discipline</a></li>
                        <li class="nav-item"><a class="nav-link" href="gallery">Gallery</a></li>
                        <li class="nav-item"><a class="nav-link" href="contact">Contact</a></li>
                        <li class="nav-item"><a class="nav-link" href="https://schoolos.osartech.com.ng/">Portal</a></li>
@@ -687,7 +690,7 @@
                 });
                 const result = await res.json();
                 statusBox.className = 'alert alert-success mb-4';
-                statusBox.innerHTML = `✅ <strong>Application submitted successfully!</strong> Your application number is <strong>${result.application_number || 'pending'}</strong>. Keep it for tracking.`;
+                statusBox.innerHTML = `✅ <strong>Application submitted successfully!</strong> Your application number is <strong>${result.application_number || 'pending'}</strong>. Keep it for tracking. Go to <a href="/applicant-dashboard.html">Applicant Dashboard Page</a>`;
                 statusBox.classList.remove('d-none');
                 window.scrollTo({top: 0, behavior: 'smooth'});
                 form.reset();

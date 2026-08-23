@@ -5,14 +5,16 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
-from flask import Flask, request, jsonify, send_from_directory, session, redirect
+from flask import Flask, request, jsonify, send_from_directory, session, redirect, Response
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
 from firestore_placeholder import get_placeholder_store
 
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', 'joacim_super_secret_key')
+app.secret_key = os.getenv('SECRET_KEY') or 'local-development-only-change-me'
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+SITE_URL = os.getenv('SITE_URL', 'https://ssja.onrender.com').rstrip('/')
 
 BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_FOLDER = BASE_DIR / 'images' / 'uploads'
@@ -55,14 +57,23 @@ def initialize_firebase():
 STORE = get_placeholder_store()
 initialize_firebase()
 
-VAPID_PUBLIC_KEY = "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U"
-VAPID_PRIVATE_KEY = "uycSJxLNFTqGfzxvLT1i2mTPJqB3mcZs29_mS4h6E6g"
-VAPID_CLAIMS = {"sub": "mailto:admin@sjacs.edu.ng"}
+@app.after_request
+def no_stale_pages(response):
+    # HTML and API responses must always reflect the latest admin edits.
+    if request.path.startswith('/api/') or request.path.endswith(('.html', '/')):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+    return response
+
+VAPID_PUBLIC_KEY = os.getenv('VAPID_PUBLIC_KEY', '')
+VAPID_PRIVATE_KEY = os.getenv('VAPID_PRIVATE_KEY', '')
+VAPID_CLAIMS = {"sub": os.getenv('VAPID_SUBJECT', "mailto:admin@sjacs.edu.ng")}
 
 PAGES = {
     'index', 'about', 'academics', 'education-facilities', 'education-staff',
     'education-anthem', 'disciplinary-measures', 'school-rules-regulations',
-    'admissions', 'admission-form', 'gallery', 'contact', 'admin',
+    'admissions', 'admission-form', 'jss-subjects', 'gallery', 'contact', 'admin',
     'admin-dashboard', 'news'
 }
 
@@ -84,6 +95,8 @@ def get_next_id(items):
 
 
 def send_push_notification(title, body, url='/admin-dashboard'):
+    if not VAPID_PUBLIC_KEY or not VAPID_PRIVATE_KEY:
+        return
     try:
         from pywebpush import webpush
         for subscription_json in get_store().get('push_subscriptions', []):
@@ -166,7 +179,26 @@ def post_detail_page(post_id):
 
 @app.errorhandler(404)
 def page_not_found(error):
+    app.logger.info('404 %s %s', request.method, request.path)
     return send_from_directory(BASE_DIR, '404.html'), 404
+
+
+@app.route('/robots.txt')
+def robots_txt():
+    return Response(
+        f'User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /admin-dashboard\nDisallow: /api/\nSitemap: {SITE_URL}/sitemap.xml\n',
+        mimetype='text/plain',
+    )
+
+
+@app.route('/sitemap.xml')
+def sitemap_xml():
+    public_pages = ['/', '/about', '/academics', '/admissions', '/admission-form', '/news', '/gallery', '/contact']
+    urls = ''.join(f'<url><loc>{SITE_URL}{page}</loc></url>' for page in public_pages)
+    return Response(
+        f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>',
+        mimetype='application/xml',
+    )
 
 
 @app.route('/api/health', methods=['GET'])
@@ -436,7 +468,7 @@ def update_admission_status(app_id):
     if not session.get('admin_logged_in'):
         return jsonify({"success": False, "message": "Unauthorized"}), 401
     status = (request.get_json() or {}).get('status')
-    valid_statuses = {'Submitted', 'Under Review', 'Accepted', 'Rejected', 'Waitlisted'}
+    valid_statuses = {'Submitted', 'Under Review', 'Accepted', 'Rejected', 'Waitlisted', 'Shortlisted'}
     if status not in valid_statuses:
         return jsonify({"success": False, "message": "Invalid application status"}), 400
     for admission in get_store().get('admissions', []):

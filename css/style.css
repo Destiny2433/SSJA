@@ -10,6 +10,15 @@
     
 }
 
+@media print {
+  nav, footer, .btn, .navbar, .no-print { display: none !important; }
+  body { background: #fff !important; color: #111; }
+  .container, .card { max-width: 100% !important; box-shadow: none !important; border: 0 !important; }
+  @page { size: A4; margin: 16mm; }
+}
+
+input:focus, select:focus, textarea:focus { border-color: var(--secondary-color) !important; box-shadow: 0 0 0 .2rem rgba(255,215,0,.2) !important; }
+
 /* Global Styles */
 body {
     font-family: 'Nunito', sans-serif;

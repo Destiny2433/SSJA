@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sjacs-admin-v1';
+const CACHE_NAME = 'sjacs-admin-v3';
 const OFFLINE_URL = '/admin-dashboard';
 
 // Files to cache for offline use
@@ -55,17 +55,15 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // For everything else, cache-first
+    // Network-first so admins always see their latest edits.
     event.respondWith(
-        caches.match(event.request).then(cached => {
-            return cached || fetch(event.request).then(response => {
+        fetch(event.request).then(response => {
                 if (response && response.status === 200) {
                     const responseClone = response.clone();
                     caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseClone));
                 }
                 return response;
-            }).catch(() => caches.match(OFFLINE_URL));
-        })
+            }).catch(() => caches.match(event.request).then(cached => cached || caches.match(OFFLINE_URL)))
     );
 });
 
