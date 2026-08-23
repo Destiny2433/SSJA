@@ -469,6 +469,24 @@
 .dashboard-body .btn-primary:hover { background: linear-gradient(135deg,#116493,#0b3d62); transform: translateY(-1px); }
 .dashboard-body .table { --bs-table-bg: transparent; }
 .dashboard-body .table thead th { color: #50708c; font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; }
+.dashboard-body .metric-card { position: relative; display: flex; align-items: center; gap: 14px; min-height: 104px; padding: 20px; overflow: hidden; background: #fff; border: 1px solid #dce7f1; border-radius: 16px; box-shadow: 0 8px 24px rgba(16,55,88,.06); transition: transform .2s ease, box-shadow .2s ease; }
+.dashboard-body .metric-card::after { content: ''; position: absolute; width: 100px; height: 100px; right: -35px; top: -38px; border-radius: 50%; background: radial-gradient(circle,rgba(212,168,83,.25),transparent 68%); }
+.dashboard-body .metric-card:hover { transform: translateY(-3px); box-shadow: 0 16px 30px rgba(16,55,88,.12); }
+.dashboard-body .metric-icon { display: grid; place-items: center; width: 52px; height: 52px; flex: 0 0 52px; border-radius: 15px; font-size: 1.25rem; background: #e9f3fc !important; color: #0b4d78 !important; }
+.dashboard-body .metric-card:nth-child(2) .metric-icon { background: #fff5dc !important; color: #a96d00 !important; }
+.dashboard-body .metric-card:nth-child(3) .metric-icon { background: #e7f8f1 !important; color: #157a5a !important; }
+.dashboard-body .metric-label { color: #6c8296; font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.dashboard-body .metric-value { color: #102f4a; margin-top: 3px; font-weight: 800; font-size: 1.05rem; }
+.dashboard-body .card-header.bg-white { border-radius: 16px 16px 0 0 !important; }
+.dashboard-body .card-header h5 { color: #093a63 !important; font-weight: 800 !important; }
+.dashboard-body .form-label { color: #264c6b; font-size: .82rem; letter-spacing: .01em; }
+.dashboard-body input[type=file] { padding: .55rem .75rem; background: #f8fbfe; }
+.dashboard-body .alert { border: 0; border-radius: 12px; box-shadow: 0 8px 20px rgba(16,55,88,.08); }
+.dashboard-body .btn { min-height: 42px; border-radius: 10px; font-weight: 700; }
+.dashboard-body .btn-outline-warning { color: #ffd36f; border-color: rgba(255,211,111,.65); }
+.dashboard-body .btn-outline-light { border-color: rgba(255,255,255,.5); }
+.dashboard-body .nav-pills .nav-link { color: #315a7d; border-radius: 10px; font-weight: 700; }
+.dashboard-body .nav-pills .nav-link.active { background: #0b4d78; box-shadow: 0 5px 12px rgba(11,77,120,.18); }
 @media (max-width: 576px) {
   .dashboard-body > .navbar .container-fluid { padding-left: 14px !important; padding-right: 14px !important; }
   .dashboard-body > .navbar .navbar-brand span { font-size: .78rem; }
@@ -476,6 +494,9 @@
   .admin-hero { border-radius: 16px; }
   .admin-hero .btn { width: 100%; }
   .dashboard-body .card-body { padding: 1rem !important; }
+  .dashboard-body .metric-card { min-height: 88px; padding: 14px; border-radius: 14px; }
+  .dashboard-body .metric-icon { width: 44px; height: 44px; flex-basis: 44px; border-radius: 13px; font-size: 1rem; }
+  .dashboard-body .metric-value { font-size: .92rem; }
   .dashboard-body .row.g-3 > [class*="col-"] { margin-bottom: .15rem; }
   .dashboard-body .table-responsive { margin: 0 -.5rem; width: calc(100% + 1rem); }
 }
