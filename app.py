@@ -48,6 +48,15 @@ def initialize_firebase():
         if not firebase_admin._apps:
             firebase_admin.initialize_app(credentials.Certificate(FIREBASE_CREDENTIAL_PATH))
         _firestore_client = fs.client()
+        # Hydrate the in-memory store on startup so the admin sees persisted data.
+        snapshot = _firestore_client.collection('site_data').document('store').get()
+        if snapshot.exists:
+            persisted = snapshot.to_dict() or {}
+            for key, value in persisted.items():
+                if isinstance(value, list):
+                    STORE[key] = value
+                elif value is not None:
+                    STORE[key] = value
         return True
     except Exception as exc:
         print(f"Firebase initialization failed: {exc}")
