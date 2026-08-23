@@ -1,3 +1,10 @@
+// Standardize navigation across all public pages.
+document.addEventListener('DOMContentLoaded', () => {
+    const list = document.querySelector('.navbar-nav');
+    if (!list || location.pathname.includes('admin')) return;
+    list.innerHTML = `<li class="nav-item"><a class="nav-link" href="/">Home</a></li><li class="nav-item"><a class="nav-link" href="about">About Us</a></li><li class="nav-item dropdown"><a class="nav-link dropdown-toggle" href="academics" data-bs-toggle="dropdown">Academics</a><ul class="dropdown-menu"><li><a class="dropdown-item" href="academics">Overview</a></li><li><a class="dropdown-item" href="jss-subjects">JSS Subjects</a></li><li><a class="dropdown-item" href="education-facilities">Facilities</a></li><li><a class="dropdown-item" href="school-rules-regulations">Rules &amp; Regulations</a></li><li><a class="dropdown-item" href="disciplinary-measures">Discipline</a></li><li><a class="dropdown-item" href="education-anthem">Anthem</a></li></ul></li><li class="nav-item"><a class="nav-link" href="admissions">Admissions</a></li><li class="nav-item"><a class="nav-link" href="admission-form">Admission Form</a></li><li class="nav-item"><a class="nav-link" href="news">News &amp; Events</a></li><li class="nav-item"><a class="nav-link" href="gallery">Gallery</a></li><li class="nav-item"><a class="nav-link" href="contact">Contact</a></li><li class="nav-item"><a class="nav-link" href="https://schoolos.osartech.com.ng/" target="_blank" rel="noopener">Portal</a></li>`;
+});
+
 // Preloader Logic - Hide quickly after DOM ready, don't wait for all images
 document.addEventListener('DOMContentLoaded', () => {
     const preloader = document.createElement('div');
