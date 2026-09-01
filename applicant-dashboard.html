@@ -16,9 +16,12 @@
     <main class="container py-5" style="max-width:720px">
         <div class="text-center mb-4"><img src="images/logo.png" alt="School Logo" height="70"><h1 class="h3 mt-3">Application Status</h1></div>
         <div class="card border-0 shadow-sm p-4">
-            <form id="lookupForm" class="row g-2">
-                <div class="col-sm-8"><input id="applicationNumber" class="form-control" placeholder="SJACS-2026-99999" required></div>
+            <form id="lookupForm" class="row g-2" novalidate>
+                <div class="col-12"><label for="applicationNumber" class="form-label fw-semibold">Application number</label></div>
+                <div class="col-sm-8"><input id="applicationNumber" class="form-control" placeholder="SJACS-2026-00001" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="applicationHelp" required></div>
                 <div class="col-sm-4"><button class="btn btn-primary w-100" type="submit">Check Status</button></div>
+                <div class="col-12"><label for="parentEmail" class="form-label fw-semibold">Parent/guardian email</label><input id="parentEmail" class="form-control" type="email" autocomplete="email" required></div>
+                <div class="col-12"><div id="applicationHelp" class="form-text">Enter the application number and parent/guardian email used on the admission form.</div></div>
             </form>
             <div id="status" class="mt-4"></div>
         </div>
@@ -27,10 +30,23 @@
         document.getElementById('lookupForm').addEventListener('submit', async event => {
             event.preventDefault();
             const status = document.getElementById('status');
-            const number = document.getElementById('applicationNumber').value.trim();
+            const input = document.getElementById('applicationNumber');
+            const number = input.value.trim().toUpperCase();
+            const parentEmail = document.getElementById('parentEmail').value.trim();
+            input.value = number;
+            if (!number || !parentEmail) {
+                status.textContent = 'Enter your application number and parent/guardian email to continue.';
+                status.className = 'mt-4 alert alert-warning';
+                return;
+            }
+            status.className = 'mt-4';
             status.innerHTML = '<div class="text-muted">Loading...</div>';
             try {
-                const response = await fetch('/api/applicant/' + encodeURIComponent(number));
+                const response = await fetch('/api/applicant/status', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({application_number: number, parent_email: parentEmail})
+                });
                 const result = await response.json();
                 if (!response.ok || !result.success) throw new Error(result.message || 'Application not found');
                 const application = result.data;
@@ -48,9 +64,32 @@
                         }
                     } catch (pushError) { console.warn('Status notifications unavailable', pushError); }
                 }
-                status.innerHTML = `<div class="border rounded p-4 bg-white"><div class="d-flex justify-content-between"><strong>${application.student_name}</strong><span class="badge bg-primary">${application.status}</span></div><hr><p class="mb-1"><strong>Application number:</strong> ${application.application_number}</p><p class="mb-0"><strong>Class:</strong> ${application.class_applying || '-'}</p><p class="text-muted small mt-3 mb-0">Submitted ${application.submitted_at || ''}</p></div>`;
-            } catch (error) { status.innerHTML = `<div class="alert alert-danger">${error.message}</div>`; }
+                renderApplicationStatus(status, application);
+            } catch (error) {
+                status.textContent = error.message || 'Unable to check the application status right now.';
+                status.className = 'mt-4 alert alert-danger';
+            }
         });
+
+        function renderApplicationStatus(container, application) {
+            const statusClass = {
+                'Accepted': 'bg-success', 'Rejected': 'bg-danger', 'Under Review': 'bg-warning text-dark',
+                'Waitlisted': 'bg-secondary', 'Shortlisted': 'bg-info text-dark', 'Submitted': 'bg-primary'
+            }[application.status] || 'bg-primary';
+            container.replaceChildren();
+            container.className = 'mt-4';
+            const card = document.createElement('section');
+            card.className = 'border rounded p-4 bg-white';
+            card.innerHTML = '<div class="d-flex justify-content-between align-items-start gap-3"><strong class="applicant-name"></strong><span class="badge applicant-status"></span></div><hr><p class="mb-1"><strong>Application number:</strong> <span class="application-number"></span></p><p class="mb-0"><strong>Class:</strong> <span class="application-class"></span></p><p class="text-muted small mt-3 mb-0">Submitted <span class="submitted-at"></span></p>';
+            card.querySelector('.applicant-name').textContent = application.student_name || 'Applicant';
+            const badge = card.querySelector('.applicant-status');
+            badge.className = `badge ${statusClass}`;
+            badge.textContent = application.status || 'Submitted';
+            card.querySelector('.application-number').textContent = application.application_number || '-';
+            card.querySelector('.application-class').textContent = application.class_applying || '-';
+            card.querySelector('.submitted-at').textContent = application.submitted_at || '-';
+            container.append(card);
+        }
         function urlBase64ToUint8Array(base64String) { const padding='='.repeat((4-base64String.length%4)%4); const raw=atob((base64String+padding).replace(/-/g,'+').replace(/_/g,'/')); return Uint8Array.from([...raw].map(c=>c.charCodeAt(0))); }
     </script>
 </body>

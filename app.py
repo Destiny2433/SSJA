@@ -545,13 +545,19 @@ def update_admission_status(app_id):
     return jsonify({"success": False, "message": "Application not found"}), 404
 
 
-@app.route('/api/applicant/<application_number>', methods=['GET'])
-def applicant_dashboard(application_number):
+@app.route('/api/applicant/status', methods=['POST'])
+def applicant_dashboard():
+    data = request.get_json() or {}
+    application_number = str(data.get('application_number', '')).strip().upper()
+    parent_email = str(data.get('parent_email', '')).strip().casefold()
+    if not application_number or not parent_email:
+        return jsonify({"success": False, "message": "Application number and parent email are required"}), 400
     admission = next((item for item in get_store().get('admissions', [])
-                      if item.get('application_number') == application_number), None)
+                      if item.get('application_number') == application_number
+                      and str(item.get('parent_email', '')).strip().casefold() == parent_email), None)
     if not admission:
-        return jsonify({"success": False, "message": "Application not found"}), 404
-    send_push_notification('Application status viewed', f"{admission.get('application_number')} was checked by the applicant.")
+        # Do not reveal whether an application number exists to unauthenticated visitors.
+        return jsonify({"success": False, "message": "No application matches those details"}), 404
     return jsonify({"success": True, "data": {
         "application_number": admission.get('application_number'),
         "student_name": admission.get('student_name'),

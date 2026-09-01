@@ -92,7 +92,9 @@ DEFAULT_GALLERY = [
 
 
 def get_placeholder_store():
-    admin_password = os.getenv('ADMIN_PASSWORD', 'change-this-local-admin-password')
+    # Never create a predictable administrator account when configuration is missing.
+    # A configured ADMIN_PASSWORD is required for a usable persistent login.
+    admin_password = os.getenv('ADMIN_PASSWORD') or os.urandom(24).hex()
     admin_hash = generate_password_hash(admin_password)
     store = {
         "admins": [
