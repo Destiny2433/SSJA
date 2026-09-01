@@ -8,22 +8,21 @@ from pathlib import Path
 from flask import Flask, request, jsonify, send_from_directory, session, redirect, Response
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+from dotenv import load_dotenv
 
-from firestore_placeholder import get_placeholder_store
+load_dotenv()
+
+from firestore_placeholder import DEFAULT_GALLERY, get_placeholder_store
 
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY') or 'local-development-only-change-me'
+app.secret_key = os.getenv('SECRET_KEY', 'local-development-secret-change-me')
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 SITE_URL = os.getenv('SITE_URL', 'https://ssja.onrender.com').rstrip('/')
 
 BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_FOLDER = BASE_DIR / 'images' / 'uploads'
 UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
-
-from dotenv import load_dotenv
-
-load_dotenv()
-
 FIREBASE_CREDENTIAL_PATH = os.environ.get(
     'FIREBASE_CREDENTIAL_PATH',
     str(BASE_DIR / 'great-worship-firebase-adminsdk-cyj0x-110600c06e.json')
@@ -42,13 +41,17 @@ except ImportError:
 
 def initialize_firebase():
     global _firestore_client
-    if firebase_admin is None or not os.path.exists(FIREBASE_CREDENTIAL_PATH):
+    if firebase_admin is None:
+        app.logger.warning('firebase-admin is not installed; starting with temporary in-memory data.')
+        return False
+    if not os.path.exists(FIREBASE_CREDENTIAL_PATH):
+        app.logger.warning('Firestore credentials not found at %s; starting with temporary in-memory data.', FIREBASE_CREDENTIAL_PATH)
         return False
     try:
         if not firebase_admin._apps:
             firebase_admin.initialize_app(credentials.Certificate(FIREBASE_CREDENTIAL_PATH))
         _firestore_client = fs.client()
-        # Hydrate the in-memory store on startup so the admin sees persisted data.
+        # Hydrate the in-memory working copy from Firestore.
         snapshot = _firestore_client.collection('site_data').document('store').get()
         if snapshot.exists:
             persisted = snapshot.to_dict() or {}
@@ -57,9 +60,15 @@ def initialize_firebase():
                     STORE[key] = value
                 elif value is not None:
                     STORE[key] = value
+        if not STORE.get('gallery'):
+            STORE['gallery'] = DEFAULT_GALLERY.copy()
+            _firestore_client.collection('site_data').document('store').set(STORE)
         return True
     except Exception as exc:
-        print(f"Firebase initialization failed: {exc}")
+        # The public site should remain available if Firestore is temporarily
+        # unreachable. Changes made in this mode are not persisted.
+        _firestore_client = None
+        app.logger.warning('Firestore initialization failed; starting with temporary in-memory data: %s', exc)
         return False
 
 
@@ -88,15 +97,25 @@ PAGES = {
 
 
 def get_store():
+    # Render may serve requests from different worker processes. Refresh the
+    # shared document before reads so public pages always see Firestore data.
+    if _firestore_client is not None:
+        snapshot = _firestore_client.collection('site_data').document('store').get()
+        if snapshot.exists:
+            persisted = snapshot.to_dict() or {}
+            for key, value in persisted.items():
+                if isinstance(value, list):
+                    STORE[key] = value
+                elif value is not None:
+                    STORE[key] = value
     return STORE
 
 
 def save_store():
-    if _firestore_client is not None:
-        try:
-            _firestore_client.collection('site_data').document('store').set(STORE)
-        except Exception as exc:
-            print(f"Failed to sync store to Firestore: {exc}")
+    if _firestore_client is None:
+        app.logger.warning('Firestore is unavailable; changes will be kept only until the app restarts.')
+        return
+    _firestore_client.collection('site_data').document('store').set(STORE)
 
 
 def get_next_id(items):
@@ -153,6 +172,7 @@ def login():
     admin = next((a for a in get_store().get('admins', []) if a.get('username') == data.get('username')), None)
     if admin and check_password_hash(admin['password_hash'], data.get('password', '')):
         session['admin_logged_in'] = True
+        session.permanent = True
         return jsonify({"success": True})
     return jsonify({"success": False, "message": "Invalid username or password"}), 401
 
@@ -174,6 +194,24 @@ def subscribe():
         subscriptions.append(sub_json)
         save_store()
     return jsonify({"success": True, "message": "Subscribed to push notifications"})
+
+
+@app.route('/api/applicant-subscribe', methods=['POST'])
+def applicant_subscribe():
+    data = request.get_json() or {}
+    number = str(data.get('application_number', '')).strip().upper()
+    subscription = data.get('subscription')
+    if not number or not isinstance(subscription, dict) or not subscription.get('endpoint'):
+        return jsonify({"success": False, "message": "Application number and subscription are required"}), 400
+    if not any(a.get('application_number') == number for a in get_store().get('admissions', [])):
+        return jsonify({"success": False, "message": "Application not found"}), 404
+    subscriptions = get_store().setdefault('applicant_push_subscriptions', {})
+    subscriptions.setdefault(number, [])
+    encoded = json.dumps(subscription, sort_keys=True)
+    if encoded not in subscriptions[number]:
+        subscriptions[number].append(encoded)
+        save_store()
+    return jsonify({"success": True})
 
 
 @app.route('/api/vapid-public-key', methods=['GET'])
@@ -215,7 +253,7 @@ def health_check():
     return jsonify({
         "success": True,
         "firebase": _firestore_client is not None,
-        "storage": "firestore" if _firestore_client is not None else "local-fallback",
+        "storage": "firestore",
     })
 
 
@@ -270,6 +308,10 @@ def upload_file():
 
     if not file.filename or not key:
         return jsonify({"success": False, "message": "Missing file or key"}), 400
+    allowed = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
+    extension = Path(file.filename).suffix.lower()
+    if extension not in allowed or not (file.mimetype or '').startswith('image/'):
+        return jsonify({"success": False, "message": "Only JPG, PNG, WEBP or GIF images are allowed"}), 400
 
     filename = f"{int(time.time())}_{secure_filename(file.filename)}"
     filepath = os.path.join(UPLOAD_FOLDER, filename)
@@ -310,6 +352,9 @@ def upload_admission_document():
         return jsonify({"success": False, "message": "No document selected"}), 400
     if document_type not in allowed_types:
         return jsonify({"success": False, "message": "Invalid document type"}), 400
+    allowed = {'.jpg', '.jpeg', '.png', '.webp', '.pdf'}
+    if Path(file.filename).suffix.lower() not in allowed:
+        return jsonify({"success": False, "message": "Allowed documents: PDF, JPG, PNG or WEBP"}), 400
 
     filename = f"admission_{document_type}_{uuid.uuid4().hex[:12]}_{secure_filename(file.filename)}"
     file.save(UPLOAD_FOLDER / filename)
@@ -395,6 +440,11 @@ def delete_message(msg_id):
 @app.route('/api/admissions', methods=['POST'])
 def submit_admission():
     data = request.get_json() or {}
+    required = ('student_name', 'date_of_birth', 'gender', 'class_applying', 'parent_name', 'parent_phone', 'parent_email', 'student_home_address')
+    if any(not str(data.get(field, '')).strip() for field in required):
+        return jsonify({"success": False, "message": "Please complete all required admission fields"}), 400
+    if '@' not in str(data.get('parent_email', '')) or len(str(data.get('parent_phone', ''))) < 7:
+        return jsonify({"success": False, "message": "Enter a valid parent email and phone number"}), 400
     timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
 
     store = get_store()
@@ -485,6 +535,12 @@ def update_admission_status(app_id):
             admission['status'] = status
             admission['status_updated_at'] = time.strftime('%Y-%m-%d %H:%M:%S')
             save_store()
+            for sub in get_store().get('applicant_push_subscriptions', {}).get(admission.get('application_number'), []):
+                try:
+                    from pywebpush import webpush
+                    webpush(subscription_info=json.loads(sub), data=json.dumps({"title": "Application status updated", "body": f"Your application is now {status}.", "url": "/admission-dashboard"}), vapid_private_key=VAPID_PRIVATE_KEY, vapid_claims=VAPID_CLAIMS)
+                except Exception as exc:
+                    app.logger.warning('Applicant push failed: %s', exc)
             return jsonify({"success": True, "data": admission})
     return jsonify({"success": False, "message": "Application not found"}), 404
 
@@ -495,6 +551,7 @@ def applicant_dashboard(application_number):
                       if item.get('application_number') == application_number), None)
     if not admission:
         return jsonify({"success": False, "message": "Application not found"}), 404
+    send_push_notification('Application status viewed', f"{admission.get('application_number')} was checked by the applicant.")
     return jsonify({"success": True, "data": {
         "application_number": admission.get('application_number'),
         "student_name": admission.get('student_name'),
@@ -637,5 +694,5 @@ def get_notifications():
 
 
 if __name__ == '__main__':
-    port = int(os.getenv('PORT', 5000))
+    port = int(os.getenv('PORT', 7000))
     app.run(host='0.0.0.0', port=port, debug=False)

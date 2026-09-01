@@ -80,24 +80,34 @@ PLACEHOLDER_POSTS = [
     },
 ]
 
+DEFAULT_GALLERY = [
+    {"id": 1, "category": "events", "image_path": "images/visit-to-sister-school.jpeg", "title": "Visit to a Sister School", "description": "Students learning and connecting with another school community."},
+    {"id": 2, "category": "classrooms", "image_path": "images/Interactive classroom with engaged students.png", "title": "Interactive Classroom", "description": "Engaging lessons that encourage participation and curiosity."},
+    {"id": 3, "category": "sports", "image_path": "images/sprot.jpeg", "title": "School Sports", "description": "Students enjoying teamwork, fitness, and school spirit."},
+    {"id": 4, "category": "events", "image_path": "images/EXCURSION.jpeg", "title": "Educational Excursion", "description": "Learning continues beyond the classroom."},
+    {"id": 5, "category": "classrooms", "image_path": "images/school-building.png", "title": "Our School", "description": "A welcoming environment for learning and growth."},
+]
+
 
 
 
 def get_placeholder_store():
-    admin_hash = generate_password_hash("admin123")
+    admin_password = os.getenv('ADMIN_PASSWORD', 'change-this-local-admin-password')
+    admin_hash = generate_password_hash(admin_password)
     store = {
         "admins": [
             {
                 "id": 1,
-                "username": "admin",
+                "username": os.getenv('ADMIN_USERNAME', 'admin'),
                 "password_hash": admin_hash,
             }
         ],
         "content": [],
-        "gallery": [],
+        "gallery": deepcopy(DEFAULT_GALLERY),
         "messages": [],
         "admissions": [],
         "posts": deepcopy(PLACEHOLDER_POSTS),
         "push_subscriptions": [],
+        "applicant_push_subscriptions": {},
     }
     return deepcopy(store)

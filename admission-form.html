@@ -1,8 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta name="google-site-verification" content="C2esHoiuHmAVjsrwET9NFiK_Pg2B_12W6nE_JLUyvOw" />
+    
+    
 
-    <!-- ===== SEO Meta Tags ===== -->
+<!-- ===== SEO Meta Tags ===== -->
     <link rel="canonical" href="https://ssja.onrender.com/admission-form">
     <meta name="robots" content="index, follow">
     <meta property="og:type" content="website">
@@ -181,7 +184,7 @@
                 margin-top: 5px !important;
             }
 
-            /* Compact section headings — navy with gold underline */
+            /* Compact section headings ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â navy with gold underline */
             form h4 {
                 color: #123460 !important;
                 border-bottom: 1.5px solid #B28A1C !important;
@@ -216,7 +219,7 @@
                 gap: 10px !important;
             }
 
-            /* Declaration box — navy border to match PDF */
+            /* Declaration box ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â navy border to match PDF */
             .mt-5.p-4.rounded {
                 margin-top: 5px !important;
                 padding: 4px 8px !important;
@@ -257,7 +260,10 @@
 </head>
 <body>
     <header class="sticky-top">
-        <nav class="navbar navbar-expand-lg navbar-light bg-white">
+    
+    
+
+<nav class="navbar navbar-expand-lg navbar-light bg-white">
             <div class="container">
                 <a class="navbar-brand" href="index.html">
                     <img src="images/logo.png" alt="School Logo" height="50">
@@ -284,7 +290,7 @@
         </nav>
     </header>
     <!-- Hero Section -->
-    <section class="hero d-flex align-items-center justify-content-center" style="height: 40vh; background: linear-gradient(135deg, var(--primary-color), rgba(0, 51, 102, 0.8)), url('images/hero-bg.jpg') center/cover; position: relative;">
+    <section class="hero d-flex align-items-center justify-content-center" style="height: 40vh; background: linear-gradient(135deg, var(--primary-color), rgba(0, 51, 102, 0.8)), url('images/school-building.png') center/cover; position: relative;">
         <div class="container text-center text-white position-relative" style="z-index: 2;">
 
                         <h1 >Admission</h1>
@@ -690,7 +696,7 @@
                 });
                 const result = await res.json();
                 statusBox.className = 'alert alert-success mb-4';
-                statusBox.innerHTML = `✅ <strong>Application submitted successfully!</strong> Your application number is <strong>${result.application_number || 'pending'}</strong>. Keep it for tracking. Go to <a href="/applicant-dashboard.html">Applicant Dashboard Page</a>`;
+                statusBox.innerHTML = `ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ <strong>Application submitted successfully!</strong> Your application number is <strong>${result.application_number || 'pending'}</strong>. Keep it for tracking. Go to <a href="/applicant-dashboard.html">Applicant Dashboard Page</a>`;
                 statusBox.classList.remove('d-none');
                 window.scrollTo({top: 0, behavior: 'smooth'});
                 form.reset();
@@ -699,7 +705,7 @@
                 if (previewSpan) previewSpan.style.display = 'block';
             } catch(err) {
                 statusBox.className = 'alert alert-danger mb-4';
-                statusBox.textContent = '❌ Submission failed. Please check your connection and try again.';
+                statusBox.textContent = 'ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ Submission failed. Please check your connection and try again.';
                 statusBox.classList.remove('d-none');
             } finally {
                 submitBtn.disabled = false;

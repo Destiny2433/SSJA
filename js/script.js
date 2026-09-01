@@ -137,6 +137,14 @@ function openLightbox(src, caption) {
     });
 }
 
+// Make every facility/gallery image open in the same full-screen viewer.
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.gallery-item img').forEach(img => {
+        img.style.cursor = 'zoom-in';
+        img.addEventListener('click', () => openLightbox(img.currentSrc || img.src, img.alt || 'School facility'));
+    });
+});
+
 function closeLightbox() {
     const lightbox = document.querySelector('.lightbox');
     if (lightbox) {
@@ -268,16 +276,6 @@ navLinks.forEach(link => {
     }
 });
 
-// Contact form submission (placeholder)
-const contactForm = document.querySelector('#contactForm');
-if (contactForm) {
-    contactForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        alert('Thank you for your message! We will get back to you soon.');
-        contactForm.reset();
-    });
-}
-
 // Auto-slide hero carousel
 document.addEventListener('DOMContentLoaded', function() {
     const heroCarousel = document.querySelector('#heroCarousel');
@@ -314,8 +312,18 @@ document.addEventListener('DOMContentLoaded', async function() {
                     'current_term', 
                     'about_intro', 
                     'about_mission', 
-                    'about_vision'
+                    'about_vision',
+                    'priest_description',
+                    'headboy_name',
+                    'headgirl_name'
                 ];
+
+                const pageContentSelectors = {
+                    school_rules: '.school_rules-dynamic',
+                    education_facilities: '.education_facilities-dynamic',
+                    disciplinary_measures: '.disciplinary_measures-dynamic',
+                    jss_subjects: '.jss_subjects-dynamic'
+                };
                 
                 elementsToUpdate.forEach(id => {
                     if (data[id]) {
@@ -325,12 +333,17 @@ document.addEventListener('DOMContentLoaded', async function() {
                         });
                     }
                 });
+                Object.entries(pageContentSelectors).forEach(([key, selector]) => {
+                    if (data[key]) document.querySelectorAll(selector).forEach(el => { el.innerHTML = data[key].replace(/\n/g, '<br>'); });
+                });
                 
                 // Inject Image Elements
                 const imagesToUpdate = {
                     'priest_image': '.priest-image-dynamic',
                     'hero_bg': '.hero-bg-dynamic',
-                    'about_image': '.about-image-dynamic'
+                    'about_image': '.about-image-dynamic',
+                    'headboy_image': '.headboy_image-dynamic',
+                    'headgirl_image': '.headgirl_image-dynamic'
                 };
                 
                 for (const [key, selector] of Object.entries(imagesToUpdate)) {
@@ -344,6 +357,17 @@ document.addEventListener('DOMContentLoaded', async function() {
                             }
                         });
                     }
+                }
+
+                // Render the anthem saved by the admin dashboard.
+                if (data.school_anthem) {
+                    const anthemParts = String(data.school_anthem).split('\n---\n');
+                    const anthemFields = ['anthem_title_dynamic', 'anthem_verse1_dynamic', 'anthem_chorus_dynamic', 'anthem_verse2_dynamic', 'anthem_verse3_dynamic'];
+                    anthemFields.forEach((selector, index) => {
+                        document.querySelectorAll('.' + selector + ', #' + selector).forEach(el => {
+                            el.textContent = anthemParts[index] || '';
+                        });
+                    });
                 }
                 
                 // Inject Gallery Data if present
@@ -361,6 +385,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                                     <h5>${item.title || 'Gallery Image'}</h5>
                                     <p>${item.category}</p>
                                 </div>
+                            </div>
                         `;
                     });
                 }

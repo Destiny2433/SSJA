@@ -7,7 +7,6 @@ const urlsToCache = [
   "/academics.html",
   "/admissions.html",
   "/admission-form.html",
-  "/pay-fees.html",
   "/gallery.html",
   "/contact.html",
   "/css/style.css",

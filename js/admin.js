@@ -17,6 +17,11 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="loader-text">Loading SS. Joachim and Anne Catholic School...</div>
     `;
     document.body.prepend(preloader);
+    const anthem = document.getElementById('school_anthem');
+    if (anthem) {
+        anthem.insertAdjacentHTML('beforebegin', '<input id="anthem_title" class="form-control mb-2" placeholder="Anthem title"><textarea id="anthem_verse1" class="form-control mb-2" rows="2" placeholder="Verse 1"></textarea><textarea id="anthem_chorus" class="form-control mb-2" rows="2" placeholder="Chorus / refrain"></textarea><textarea id="anthem_verse2" class="form-control mb-2" rows="2" placeholder="Verse 2"></textarea><textarea id="anthem_verse3" class="form-control" rows="2" placeholder="Verse 3 (optional)"></textarea>');
+        anthem.classList.add('d-none');
+    }
 });
 
 window.addEventListener('load', () => {
@@ -27,6 +32,22 @@ window.addEventListener('load', () => {
             preloader.remove();
         }, 500); // Wait for transition
     }
+});
+
+// Give every dashboard section a clearly visible save action.
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.dashboard-body .admin-card .card-header').forEach(header => {
+        if (header.querySelector('.section-save-btn')) return;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'btn btn-sm btn-primary section-save-btn';
+        button.innerHTML = '<i class="fas fa-save me-1"></i> Save Section';
+        button.addEventListener('click', () => {
+            if (typeof saveAllSettings === 'function') saveAllSettings();
+        });
+        header.classList.add('section-header');
+        header.appendChild(button);
+    });
 });
 
 // Handle Login
@@ -108,6 +129,12 @@ async function loadDashboardData() {
             fields.forEach(f => {
                 if (document.getElementById(f)) document.getElementById(f).value = data[f] || '';
             });
+            if (data.school_anthem) {
+                String(data.school_anthem).split('\n---\n').forEach((part, index) => {
+                    const field = document.getElementById(['anthem_title', 'anthem_verse1', 'anthem_chorus', 'anthem_verse2', 'anthem_verse3'][index]);
+                    if (field) field.value = part;
+                });
+            }
             
             // Populate image previews
             const images = ['priest_image', 'hero_bg', 'about_image', 'headboy_image', 'headgirl_image'];
@@ -157,7 +184,7 @@ async function saveAllSettings() {
         school_rules: document.getElementById('school_rules')?.value,
         education_facilities: document.getElementById('education_facilities')?.value,
         disciplinary_measures: document.getElementById('disciplinary_measures')?.value,
-        school_anthem: document.getElementById('school_anthem')?.value,
+        school_anthem: ['anthem_title','anthem_verse1','anthem_chorus','anthem_verse2','anthem_verse3'].map(id => document.getElementById(id)?.value || '').filter(Boolean).join('\n---\n'),
         jss_subjects: document.getElementById('jss_subjects')?.value
     };
     
@@ -522,6 +549,12 @@ async function editPost(id) {
 }
 
 async function saveEditedPost(id, existingImagePath) {
+    const imageInput = document.getElementById('post_image_input');
+    if (imageInput?.files?.length) {
+        const upload = new FormData(); upload.append('image', imageInput.files[0]); upload.append('key', 'post_temp');
+        const uploaded = await fetch('/api/upload', {method: 'POST', body: upload}).then(r => r.json());
+        if (uploaded.success) existingImagePath = uploaded.path;
+    }
     const data = {
         title: document.getElementById('post_title').value.trim(),
         category: document.getElementById('post_category').value,

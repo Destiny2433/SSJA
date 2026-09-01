@@ -1,7 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta name="google-site-verification" content="C2esHoiuHmAVjsrwET9NFiK_Pg2B_12W6nE_JLUyvOw" />
+    
+    
+
+<meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Application Status | SS Joachim and Anne</title>
     <meta name="robots" content="noindex, nofollow">
@@ -30,9 +34,24 @@
                 const result = await response.json();
                 if (!response.ok || !result.success) throw new Error(result.message || 'Application not found');
                 const application = result.data;
+                if ('serviceWorker' in navigator && 'PushManager' in window) {
+                    try {
+                        const registration = await navigator.serviceWorker.register('/sw.js');
+                        const keyResponse = await fetch('/api/vapid-public-key');
+                        const key = (await keyResponse.json()).publicKey;
+                        if (key && Notification.permission !== 'denied') {
+                            const permission = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
+                            if (permission === 'granted') {
+                                const subscription = await registration.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(key)});
+                                await fetch('/api/applicant-subscribe', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({application_number: application.application_number, subscription: subscription.toJSON()})});
+                            }
+                        }
+                    } catch (pushError) { console.warn('Status notifications unavailable', pushError); }
+                }
                 status.innerHTML = `<div class="border rounded p-4 bg-white"><div class="d-flex justify-content-between"><strong>${application.student_name}</strong><span class="badge bg-primary">${application.status}</span></div><hr><p class="mb-1"><strong>Application number:</strong> ${application.application_number}</p><p class="mb-0"><strong>Class:</strong> ${application.class_applying || '-'}</p><p class="text-muted small mt-3 mb-0">Submitted ${application.submitted_at || ''}</p></div>`;
             } catch (error) { status.innerHTML = `<div class="alert alert-danger">${error.message}</div>`; }
         });
+        function urlBase64ToUint8Array(base64String) { const padding='='.repeat((4-base64String.length%4)%4); const raw=atob((base64String+padding).replace(/-/g,'+').replace(/_/g,'/')); return Uint8Array.from([...raw].map(c=>c.charCodeAt(0))); }
     </script>
 </body>
 </html>
