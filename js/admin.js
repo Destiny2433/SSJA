@@ -393,16 +393,29 @@ async function loadAdmissions() {
                     </div>
                     <small class="text-muted">${a.submitted_at || ''}</small>
                 </div>
-                    <div class="row mt-2 small text-muted">
+                    <div class="row mt-2 small text-muted g-2">
                     <div class="col-sm-4"><b>Application No:</b> ${a.application_number || a.id}</div>
-                    <div class="col-sm-4"><b>Status:</b> <select class="form-select form-select-sm d-inline-block w-auto" onchange="updateAdmissionStatus(${a.id}, this.value)">${['Submitted','Under Review','Accepted','Rejected','Waitlisted'].map(s => `<option ${s === (a.status || 'Submitted') ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
+                    <div class="col-sm-4"><b>Status:</b> <select class="form-select form-select-sm d-inline-block w-auto" onchange="updateAdmissionStatus(${a.id}, this.value)">${['Submitted','Under Review','Accepted','Rejected','Waitlisted','Shortlisted'].map(s => `<option ${s === (a.status || 'Submitted') ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
+                    <div class="col-sm-4"><b>Session/Term:</b> ${a.session_term || '-'}</div>
+                    <div class="col-sm-4"><b>Nationality:</b> ${a.nationality || '-'}</div>
+                    <div class="col-sm-4"><b>Previous School:</b> ${a.previous_school || '-'}</div>
                     <div class="col-sm-4"><b>Class:</b> ${a.class_applying || '-'}</div>
                     <div class="col-sm-4"><b>DOB:</b> ${a.date_of_birth || '-'}</div>
                     <div class="col-sm-4"><b>Gender:</b> ${a.gender || '-'}</div>
-                    <div class="col-sm-4"><b>Parent:</b> ${a.parent_name || '-'}</div>
+                    <div class="col-sm-4"><b>Parent/Guardian:</b> ${a.parent_name || '-'}</div>
+                    <div class="col-sm-4"><b>Relationship:</b> ${a.parent_relationship || '-'}</div>
+                    <div class="col-sm-4"><b>Occupation:</b> ${a.parent_occupation || '-'}</div>
                     <div class="col-sm-4"><b>Phone:</b> ${a.parent_phone || '-'}</div>
                     <div class="col-sm-4"><b>Email:</b> ${a.parent_email || '-'}</div>
-                    <div class="col-sm-12"><b>Address:</b> ${a.address || '-'}</div>
+                    <div class="col-sm-12"><b>Student Home Address:</b> ${a.student_home_address || a.address || '-'}</div>
+                    <div class="col-sm-12"><b>Parent Home Address:</b> ${a.parent_home_address || '-'}</div>
+                    <div class="col-sm-4"><b>Emergency Contact:</b> ${a.emergency_contact_name || '-'}</div>
+                    <div class="col-sm-4"><b>Emergency Phone:</b> ${a.emergency_contact_phone || '-'}</div>
+                    <div class="col-sm-4"><b>Emergency Relationship:</b> ${a.emergency_contact_relationship || '-'}</div>
+                    <div class="col-sm-4"><b>Blood Group:</b> ${a.blood_group || '-'}</div>
+                    <div class="col-sm-8"><b>Medical Conditions/Allergies:</b> ${a.allergies_medical_conditions || '-'}</div>
+                    <div class="col-sm-12"><b>Parent Signature:</b> ${a.parent_signature || '-'} <b class="ms-3">Date:</b> ${a.signature_date || '-'}</div>
+                    <div class="col-sm-12"><b>Uploaded Documents:</b> ${[a.passport_photo_path, a.birth_certificate_path, a.previous_school_report_path].filter(Boolean).map(path => `<a class="me-3" href="${path}" target="_blank" rel="noopener">View document</a>`).join('') || '-'}</div>
                 </div>
 <div class="d-flex gap-2 mt-2">
                     ${!a.is_read ? `<button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="markAdmissionRead(${a.id})">Mark as Read</button>` : ''}

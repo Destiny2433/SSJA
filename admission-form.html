@@ -696,7 +696,7 @@
                 });
                 const result = await res.json();
                 statusBox.className = 'alert alert-success mb-4';
-                statusBox.innerHTML = `ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ <strong>Application submitted successfully!</strong> Your application number is <strong>${result.application_number || 'pending'}</strong>. Keep it for tracking. Go to <a href="/applicant-dashboard.html">Applicant Dashboard Page</a>`;
+                statusBox.innerHTML = `<strong>Application submitted successfully!</strong> Your application number is <strong>${result.application_number || 'pending'}</strong>. Keep it for tracking. Go to <a href="/applicant-dashboard.html">Applicant Dashboard Page</a>`;
                 statusBox.classList.remove('d-none');
                 window.scrollTo({top: 0, behavior: 'smooth'});
                 form.reset();
@@ -705,7 +705,7 @@
                 if (previewSpan) previewSpan.style.display = 'block';
             } catch(err) {
                 statusBox.className = 'alert alert-danger mb-4';
-                statusBox.textContent = 'ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ Submission failed. Please check your connection and try again.';
+                statusBox.textContent = 'Submission failed. Please check your connection and try again.';
                 statusBox.classList.remove('d-none');
             } finally {
                 submitBtn.disabled = false;

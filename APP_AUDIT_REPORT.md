@@ -6,6 +6,9 @@
 - Kept the public site available if Firebase is unavailable, while clearly marking this as temporary in-memory storage.
 - Added Google Search Console verification to every HTML page.
 - Improved the applicant-status page with clear instructions, automatic uppercasing of application numbers, better status colours, and safe text rendering for applicant information.
+- Secured applicant lookups with a matching parent/guardian email.
+- Corrected malformed gallery markup and removed visible encoding artifacts from visitor messages.
+- Made relative Firebase credential paths resolve from the project directory, regardless of where the server is launched.
 - Added a configured local administrator username and strong password in `.env` (credentials are intentionally not repeated in this report).
 
 ## Applicant status flow

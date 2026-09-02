@@ -227,7 +227,7 @@
                 const img = p.image_path
                     ? `<img src="${p.image_path}" class="post-thumb" alt="${p.title || 'Post image'}">`
                     : `<div class="post-thumb d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg,#003366,#0056b3);"><i class="fas fa-newspaper text-white" style="font-size:3rem;opacity:.6;"></i></div>`;
-                const excerpt = (p.content || '').length > 120 ? p.content.substring(0, 120) + 'ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦' : (p.content || '');
+                const excerpt = (p.content || '').length > 120 ? p.content.substring(0, 120) + '...' : (p.content || '');
                 return `
                     <div class="col-md-6 col-lg-4">
                         <div class="card post-card shadow-sm">

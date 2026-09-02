@@ -11,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent
 
 FIREBASE_CREDENTIAL_PATH = os.environ.get(
     'FIREBASE_CREDENTIAL_PATH',
-    str(BASE_DIR / 'great-worship-firebase-adminsdk-cyj0x-110600c06e.json')
+    str(BASE_DIR / 'firebase-service-account.json')
 )
 
 _firestore_client = None

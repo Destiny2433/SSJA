@@ -453,6 +453,7 @@
                 const keyRes = await fetch('/api/vapid-public-key');
                 const keyData = await keyRes.json();
                 const publicKey = keyData.publicKey;
+                if (!publicKey) return;
 
                 // Check permission
                 const permission = await Notification.requestPermission();

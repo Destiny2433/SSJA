@@ -25,31 +25,44 @@ UPLOAD_FOLDER = BASE_DIR / 'images' / 'uploads'
 UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
 FIREBASE_CREDENTIAL_PATH = os.environ.get(
     'FIREBASE_CREDENTIAL_PATH',
-    str(BASE_DIR / 'great-worship-firebase-adminsdk-cyj0x-110600c06e.json')
+    str(BASE_DIR / 'firebase-service-account.json')
 )
+if not os.path.isabs(FIREBASE_CREDENTIAL_PATH):
+    FIREBASE_CREDENTIAL_PATH = str((BASE_DIR / FIREBASE_CREDENTIAL_PATH).resolve())
 
 _firestore_client = None
 
 try:
     import firebase_admin
-    from firebase_admin import credentials, firestore as fs
+    from firebase_admin import credentials, firestore as fs, storage as firebase_storage
 except ImportError:
     firebase_admin = None
     credentials = None
     fs = None
+    firebase_storage = None
 
 
 def initialize_firebase():
     global _firestore_client
     if firebase_admin is None:
-        app.logger.warning('firebase-admin is not installed; starting with temporary in-memory data.')
-        return False
-    if not os.path.exists(FIREBASE_CREDENTIAL_PATH):
-        app.logger.warning('Firestore credentials not found at %s; starting with temporary in-memory data.', FIREBASE_CREDENTIAL_PATH)
+        app.logger.error('firebase-admin is not installed; Firestore is unavailable.')
         return False
     try:
+        service_account_json = os.getenv('FIREBASE_SERVICE_ACCOUNT_JSON', '').strip()
+        if service_account_json:
+            credential = credentials.Certificate(json.loads(service_account_json))
+        elif os.path.exists(FIREBASE_CREDENTIAL_PATH):
+            credential = credentials.Certificate(FIREBASE_CREDENTIAL_PATH)
+        else:
+            app.logger.error('Firestore credentials are missing. Set FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_CREDENTIAL_PATH.')
+            return False
+
         if not firebase_admin._apps:
-            firebase_admin.initialize_app(credentials.Certificate(FIREBASE_CREDENTIAL_PATH))
+            options = {}
+            storage_bucket = os.getenv('FIREBASE_STORAGE_BUCKET', '').strip()
+            if storage_bucket:
+                options['storageBucket'] = storage_bucket
+            firebase_admin.initialize_app(credential, options)
         _firestore_client = fs.client()
         # Hydrate the in-memory working copy from Firestore.
         snapshot = _firestore_client.collection('site_data').document('store').get()
@@ -65,10 +78,8 @@ def initialize_firebase():
             _firestore_client.collection('site_data').document('store').set(STORE)
         return True
     except Exception as exc:
-        # The public site should remain available if Firestore is temporarily
-        # unreachable. Changes made in this mode are not persisted.
         _firestore_client = None
-        app.logger.warning('Firestore initialization failed; starting with temporary in-memory data: %s', exc)
+        app.logger.error('Firestore initialization failed; persistent storage is unavailable: %s', exc)
         return False
 
 
@@ -84,6 +95,16 @@ def no_stale_pages(response):
         response.headers['Expires'] = '0'
     return response
 
+
+@app.errorhandler(RuntimeError)
+def persistent_storage_error(error):
+    if request.path.startswith('/api/'):
+        return jsonify({
+            'success': False,
+            'message': 'Persistent database storage is unavailable. Configure Firebase before using this feature.'
+        }), 503
+    return 'Persistent database storage is unavailable.', 503
+
 VAPID_PUBLIC_KEY = os.getenv('VAPID_PUBLIC_KEY', '')
 VAPID_PRIVATE_KEY = os.getenv('VAPID_PRIVATE_KEY', '')
 VAPID_CLAIMS = {"sub": os.getenv('VAPID_SUBJECT', "mailto:admin@sjacs.edu.ng")}
@@ -97,25 +118,37 @@ PAGES = {
 
 
 def get_store():
-    # Render may serve requests from different worker processes. Refresh the
-    # shared document before reads so public pages always see Firestore data.
-    if _firestore_client is not None:
-        snapshot = _firestore_client.collection('site_data').document('store').get()
-        if snapshot.exists:
-            persisted = snapshot.to_dict() or {}
-            for key, value in persisted.items():
-                if isinstance(value, list):
-                    STORE[key] = value
-                elif value is not None:
-                    STORE[key] = value
+    if _firestore_client is None:
+        raise RuntimeError('Persistent Firestore storage is unavailable')
+    # Render can run multiple workers. Refresh before every read so each
+    # worker reflects the canonical Firestore document.
+    snapshot = _firestore_client.collection('site_data').document('store').get()
+    if snapshot.exists:
+        persisted = snapshot.to_dict() or {}
+        STORE.clear()
+        STORE.update(persisted)
     return STORE
 
 
 def save_store():
     if _firestore_client is None:
-        app.logger.warning('Firestore is unavailable; changes will be kept only until the app restarts.')
-        return
-    _firestore_client.collection('site_data').document('store').set(STORE)
+        raise RuntimeError('Persistent Firestore storage is unavailable')
+    _firestore_client.collection('site_data').document('store').set(dict(STORE))
+
+
+def upload_to_firebase_storage(file, filename, content_type):
+    """Persist an uploaded file outside Render's ephemeral filesystem."""
+    if _firestore_client is None or firebase_storage is None:
+        raise RuntimeError('Persistent Firebase storage is unavailable')
+    try:
+        bucket = firebase_storage.bucket()
+        blob = bucket.blob(f'uploads/{filename}')
+        blob.upload_from_file(file.stream, content_type=content_type or 'application/octet-stream')
+        blob.make_public()
+        return blob.public_url
+    except Exception as exc:
+        app.logger.error('Firebase Storage upload failed: %s', exc)
+        raise RuntimeError('The file could not be saved to Firebase Storage') from exc
 
 
 def get_next_id(items):
@@ -250,11 +283,15 @@ def sitemap_xml():
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
+    connected = _firestore_client is not None
     return jsonify({
-        "success": True,
-        "firebase": _firestore_client is not None,
-        "storage": "firestore",
-    })
+        "success": connected,
+        "status": "connected" if connected else "unavailable",
+        "firebase": connected,
+        "database": "Firestore" if connected else None,
+        "storage": "Firebase Storage" if connected else None,
+        "message": "Firestore and Firebase Storage are connected." if connected else "Configure Firebase persistence before accepting changes."
+    }), (200 if connected else 503)
 
 
 # --- Content ---
@@ -313,11 +350,11 @@ def upload_file():
     if extension not in allowed or not (file.mimetype or '').startswith('image/'):
         return jsonify({"success": False, "message": "Only JPG, PNG, WEBP or GIF images are allowed"}), 400
 
-    filename = f"{int(time.time())}_{secure_filename(file.filename)}"
-    filepath = os.path.join(UPLOAD_FOLDER, filename)
-    file.save(filepath)
-
-    relative_path = f"images/uploads/{filename}"
+    filename = f"{int(time.time())}_{uuid.uuid4().hex[:8]}_{secure_filename(file.filename)}"
+    try:
+        relative_path = upload_to_firebase_storage(file, filename, file.mimetype)
+    except RuntimeError as exc:
+        return jsonify({"success": False, "message": str(exc)}), 503
     store = get_store()
 
     if key == 'gallery':
@@ -357,8 +394,11 @@ def upload_admission_document():
         return jsonify({"success": False, "message": "Allowed documents: PDF, JPG, PNG or WEBP"}), 400
 
     filename = f"admission_{document_type}_{uuid.uuid4().hex[:12]}_{secure_filename(file.filename)}"
-    file.save(UPLOAD_FOLDER / filename)
-    return jsonify({"success": True, "path": f"images/uploads/{filename}"})
+    try:
+        path = upload_to_firebase_storage(file, filename, file.mimetype)
+    except RuntimeError as exc:
+        return jsonify({"success": False, "message": str(exc)}), 503
+    return jsonify({"success": True, "path": path})
 
 
 @app.route('/api/gallery/<int:item_id>', methods=['DELETE'])
