@@ -680,6 +680,26 @@ async function downloadAdmissionPDF(id) {
         const app = data.data.find(a => a.id === id);
         if (!app) { showStatus('Application not found', true); return; }
 
+        // Convert the Firebase Storage photo to an embeddable data URL. A
+        // missing/unreadable photo must not prevent the rest of the PDF.
+        let passportData = null;
+        if (app.passport_photo_path) {
+            try {
+                const photoResponse = await fetch(app.passport_photo_path);
+                if (photoResponse.ok) {
+                    const blob = await photoResponse.blob();
+                    passportData = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(blob);
+                    });
+                }
+            } catch (photoError) {
+                console.warn('Passport photo could not be embedded:', photoError);
+            }
+        }
+
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'pt', 'a4');
         const pageWidth = doc.internal.pageSize.getWidth();   // 595
@@ -823,8 +843,13 @@ async function downloadAdmissionPDF(id) {
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(7);
         doc.setTextColor(...GRAY);
-        doc.text('PASSPORT', photoX + (photoW / 2), y + (photoH / 2) - 4, {align: 'center'});
-        doc.text('PHOTO', photoX + (photoW / 2), y + (photoH / 2) + 6, {align: 'center'});
+        if (passportData) {
+            const imageFormat = String(passportData).startsWith('data:image/png') ? 'PNG' : 'JPEG';
+            doc.addImage(passportData, imageFormat, photoX + 1, y + 1, photoW - 2, photoH - 2);
+        } else {
+            doc.text('PASSPORT', photoX + (photoW / 2), y + (photoH / 2) - 4, {align: 'center'});
+            doc.text('PHOTO', photoX + (photoW / 2), y + (photoH / 2) + 6, {align: 'center'});
+        }
         y += photoH + 10;
 
         // DOB / Gender / Nationality
