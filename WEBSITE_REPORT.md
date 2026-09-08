@@ -68,7 +68,56 @@ The project is a multi-page school website with a public-facing site, an adminis
 11. Replace placeholder social-media links with the school’s real profiles.
 12. Confirm all owner-provided names, photographs, dates, contact details, fees, and academic content.
 
-## 6. Recommended next features
+## 6. Environment setup
+
+Use a local `.env` file for development and Render Environment Variables for production. Never commit `.env`, Firebase credentials, or the VAPID private key.
+
+| Variable | Purpose |
+|---|---|
+| `SECRET_KEY` | Long random value used to sign Flask sessions. |
+| `ADMIN_USERNAME` | Administrator login name. |
+| `ADMIN_PASSWORD` | Strong administrator login password. Use a different production password. |
+| `SITE_URL` | Public site URL used for canonical links, sitemap, and robots output. |
+| `FIREBASE_CREDENTIAL_PATH` | Local path to the Firebase service-account JSON file. |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | Complete Firebase service-account JSON for Render. Prefer this over a file upload. |
+| `FIREBASE_PROJECT_ID` | Firebase project identifier for documentation and deployment configuration. |
+| `FIREBASE_STORAGE_BUCKET` | Firebase Storage bucket for persistent images and admission documents. |
+| `VAPID_PUBLIC_KEY` | Public Web Push key sent to browsers during subscription. |
+| `VAPID_PRIVATE_KEY` | Server-only Web Push signing key. Never expose it in HTML or JavaScript. |
+| `VAPID_SUBJECT` | Administrator contact identity, for example `mailto:admin@example.com`. |
+
+### Local setup
+
+Copy `.env.example` to `.env`, fill in the values, place `firebase-service-account.json` in the project root, and set `FIREBASE_STORAGE_BUCKET`. Generate push keys with `python generate_vapid.py`, then put both printed keys in `.env`. Start with `python app.py` and check `http://127.0.0.1:7000/api/health`.
+
+The configured `ADMIN_USERNAME` and `ADMIN_PASSWORD` are synchronized to the administrator record when the server starts. If the password is changed in `.env`, stop and restart the local server before logging in. The same rule applies after changing Render environment variables: redeploy or restart the service.
+
+After a successful admin login, the session is kept for up to 10 years and is not automatically cleared by normal page navigation, refreshes, or push-notification setup. The administrator must use the dashboard's **Logout** button to end the session. Restarting the server or changing `SECRET_KEY` invalidates existing sessions for security.
+
+### Render setup
+
+Add these variables in Render's Environment tab. Use your own production values; do not reuse the local password.
+
+```text
+SECRET_KEY=<long-random-production-secret>
+ADMIN_USERNAME=<production-admin-username>
+ADMIN_PASSWORD=<strong-production-password>
+SITE_URL=https://your-render-domain.onrender.com
+FIREBASE_SERVICE_ACCOUNT_JSON=<complete Firebase service-account JSON>
+FIREBASE_PROJECT_ID=<Firebase project ID>
+FIREBASE_STORAGE_BUCKET=<Firebase Storage bucket name>
+VAPID_PUBLIC_KEY=<generated VAPID public key>
+VAPID_PRIVATE_KEY=<generated VAPID private key>
+VAPID_SUBJECT=mailto:<monitored-school-email>
+```
+
+Do not set `FIREBASE_CREDENTIAL_PATH` on Render when using `FIREBASE_SERVICE_ACCOUNT_JSON`. Keep the existing `gunicorn app:app` start command. After deployment, check `/api/health`; Firestore must be connected, Firebase Storage must be configured, and `push_notifications` must be `true` before relying on admissions, uploads, or notifications.
+
+### Push test
+
+Push requires HTTPS in production, a supported browser, notification permission, valid VAPID keys, and an active service worker. Log into the admin dashboard once to register the admin browser. Look up an application in the applicant dashboard to register that applicant browser. Submit a contact/admission form to test admin notifications, then change an admission status to test applicant notifications.
+
+## 7. Recommended next features
 
 ### High priority
 
@@ -101,6 +150,6 @@ The project is a multi-page school website with a public-facing site, an adminis
 - Add automated tests for API routes and frontend forms.
 - Add a staging environment before production deployment.
 
-## 7. Handover recommendation
+## 8. Handover recommendation
 
 The website has a strong functional foundation and is suitable for an owner review. Before public launch, the most important tasks are securing the administrator account, making uploads persistent, validating forms/uploads, and completing a live deployment test of all admin workflows.

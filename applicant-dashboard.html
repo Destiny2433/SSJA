@@ -11,11 +11,24 @@
     <meta name="robots" content="noindex, nofollow">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        .status-shell { max-width: 760px; }
+        .status-hero { background: linear-gradient(135deg, #123460, #1d5b87); color: #fff; border-radius: 18px; }
+        .status-card { border: 0; border-radius: 16px; }
+        .status-step { position: relative; flex: 1; text-align: center; color: #8793a1; }
+        .status-step:not(:last-child)::after { content: ''; position: absolute; top: 15px; left: 62%; width: 76%; height: 3px; background: #dce4ec; }
+        .status-step.done:not(:last-child)::after { background: #1d9b6c; }
+        .status-dot { position: relative; z-index: 1; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: #dce4ec; color: #607080; font-size: .8rem; }
+        .status-step.done, .status-step.current { color: #123460; font-weight: 700; }
+        .status-step.done .status-dot, .status-step.current .status-dot { background: #1d9b6c; color: #fff; }
+        .status-step.current .status-dot { box-shadow: 0 0 0 5px rgba(29, 155, 108, .18); }
+        @media (max-width: 575px) { .status-step small { font-size: .68rem; } .status-step:not(:last-child)::after { left: 58%; width: 84%; } }
+    </style>
 </head>
 <body class="bg-light">
-    <main class="container py-5" style="max-width:720px">
-        <div class="text-center mb-4"><img src="images/logo.png" alt="School Logo" height="70"><h1 class="h3 mt-3">Application Status</h1></div>
-        <div class="card border-0 shadow-sm p-4">
+    <main class="container py-5 status-shell">
+        <div class="status-hero p-4 p-md-5 mb-4 shadow-sm"><div class="d-flex align-items-center gap-3"><img src="images/logo.png" alt="School Logo" height="58"><div><p class="text-uppercase small mb-1 opacity-75">Applicant portal</p><h1 class="h3 mb-1">Application Status</h1><p class="mb-0 opacity-75">Securely follow your admission application.</p></div></div></div>
+        <div class="card status-card shadow-sm p-4 p-md-5">
             <form id="lookupForm" class="row g-2" novalidate>
                 <div class="col-12"><label for="applicationNumber" class="form-label fw-semibold">Application number</label></div>
                 <div class="col-sm-8"><input id="applicationNumber" class="form-control" placeholder="SJACS-2026-00001" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="applicationHelp" required></div>
@@ -40,7 +53,7 @@
                 return;
             }
             status.className = 'mt-4';
-            status.innerHTML = '<div class="text-muted">Loading...</div>';
+            status.innerHTML = '<div class="d-flex align-items-center gap-2 text-muted"><span class="spinner-border spinner-border-sm" role="status"></span> Checking your application...</div>';
             try {
                 const response = await fetch('/api/applicant/status', {
                     method: 'POST',
@@ -79,8 +92,8 @@
             container.replaceChildren();
             container.className = 'mt-4';
             const card = document.createElement('section');
-            card.className = 'border rounded p-4 bg-white';
-            card.innerHTML = '<div class="d-flex justify-content-between align-items-start gap-3"><strong class="applicant-name"></strong><span class="badge applicant-status"></span></div><hr><p class="mb-1"><strong>Application number:</strong> <span class="application-number"></span></p><p class="mb-0"><strong>Class:</strong> <span class="application-class"></span></p><p class="text-muted small mt-3 mb-0">Submitted <span class="submitted-at"></span></p>';
+            card.className = 'status-card border rounded p-4 bg-white';
+            card.innerHTML = '<div class="d-flex justify-content-between align-items-start gap-3"><div><p class="text-muted small mb-1">Applicant</p><strong class="applicant-name"></strong></div><span class="badge applicant-status"></span></div><div class="status-timeline d-flex mt-4 mb-4"></div><hr><div class="row g-3 small"><div class="col-sm-6"><strong>Application number</strong><div class="application-number text-muted"></div></div><div class="col-sm-6"><strong>Class</strong><div class="application-class text-muted"></div></div><div class="col-sm-6"><strong>Submitted</strong><div class="submitted-at text-muted"></div></div><div class="col-sm-6"><strong>Last updated</strong><div class="updated-at text-muted"></div></div></div><div class="next-step alert alert-light border mt-4 mb-0"></div>';
             card.querySelector('.applicant-name').textContent = application.student_name || 'Applicant';
             const badge = card.querySelector('.applicant-status');
             badge.className = `badge ${statusClass}`;
@@ -88,6 +101,19 @@
             card.querySelector('.application-number').textContent = application.application_number || '-';
             card.querySelector('.application-class').textContent = application.class_applying || '-';
             card.querySelector('.submitted-at').textContent = application.submitted_at || '-';
+            card.querySelector('.updated-at').textContent = application.status_updated_at || 'Not updated yet';
+            const steps = ['Submitted', 'Under Review', 'Shortlisted', 'Accepted'];
+            const currentIndex = application.status === 'Rejected' ? 0 : Math.max(0, steps.indexOf(application.status));
+            card.querySelector('.status-timeline').innerHTML = steps.map((step, index) => `<div class="status-step ${index < currentIndex ? 'done' : ''} ${index === currentIndex ? 'current' : ''}"><span class="status-dot">${index < currentIndex ? '✓' : index + 1}</span><small class="d-block mt-2">${step}</small></div>`).join('');
+            const nextSteps = {
+                Submitted: 'Your application has been received. The admissions team will review it shortly.',
+                'Under Review': 'Your application is currently being reviewed. Please keep your phone and email available.',
+                Shortlisted: 'You have been shortlisted. The school will contact you with the next step.',
+                Accepted: 'Congratulations. Please contact the school office to complete registration.',
+                Rejected: 'The admissions team has completed its review. Please contact the school office if you need clarification.',
+                Waitlisted: 'Your application is on the waiting list. The school will contact you when there is an update.'
+            };
+            card.querySelector('.next-step').textContent = nextSteps[application.status] || 'The admissions team will contact you with the next update.';
             container.append(card);
         }
         function urlBase64ToUint8Array(base64String) { const padding='='.repeat((4-base64String.length%4)%4); const raw=atob((base64String+padding).replace(/-/g,'+').replace(/_/g,'/')); return Uint8Array.from([...raw].map(c=>c.charCodeAt(0))); }

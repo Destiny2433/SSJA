@@ -7,4 +7,4 @@
 - [x] Create Python script to insert the 4 news posts
 - [x] Run the script to insert posts into the database
 - [x] Verify the posts were inserted successfully
-
+- [ ] test all things are working well

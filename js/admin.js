@@ -346,9 +346,15 @@ async function loadMessages() {
 }
 
 async function markMessageRead(id) {
-    await fetch('/api/messages/' + id + '/read', {method: 'POST'});
-    loadMessages();
-    fetchNotificationCount();
+    try {
+        const response = await fetch('/api/messages/' + id + '/read', {method: 'POST'});
+        const result = await response.json();
+        if (!response.ok || !result.success) throw new Error(result.message || 'Message not found');
+        await loadMessages();
+        fetchNotificationCount();
+    } catch (error) {
+        showStatus(error.message || 'Could not mark message as read', true);
+    }
 }
 
 async function deleteMessage(id) {
@@ -371,6 +377,9 @@ async function deleteMessage(id) {
 async function loadAdmissions() {
     const container = document.getElementById('admissions_list');
     if (!container) return;
+    const escapeHtml = value => String(value ?? '').replace(/[&<>\'"]/g, character => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    }[character]));
     try {
         const res = await fetch('/api/admissions');
         const data = await res.json();
@@ -388,27 +397,27 @@ async function loadAdmissions() {
             <div class="border rounded p-3 mb-3 ${a.is_read ? 'bg-white' : 'bg-light border-start border-warning border-4'}">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <strong>${a.student_name || 'Unknown'}</strong>
+                        <strong>${escapeHtml(a.student_name || 'Unknown')}</strong>
                         ${!a.is_read ? '<span class="badge bg-warning text-dark ms-2">New</span>' : ''}
                     </div>
-                    <small class="text-muted">${a.submitted_at || ''}</small>
+                    <small class="text-muted">${escapeHtml(a.submitted_at || '')}</small>
                 </div>
                     <div class="row mt-2 small text-muted g-2">
-                    <div class="col-sm-4"><b>Application No:</b> ${a.application_number || a.id}</div>
-                    <div class="col-sm-4"><b>Status:</b> <select class="form-select form-select-sm d-inline-block w-auto" onchange="updateAdmissionStatus(${a.id}, this.value)">${['Submitted','Under Review','Accepted','Rejected','Waitlisted','Shortlisted'].map(s => `<option ${s === (a.status || 'Submitted') ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
-                    <div class="col-sm-4"><b>Session/Term:</b> ${a.session_term || '-'}</div>
-                    <div class="col-sm-4"><b>Nationality:</b> ${a.nationality || '-'}</div>
-                    <div class="col-sm-4"><b>Previous School:</b> ${a.previous_school || '-'}</div>
-                    <div class="col-sm-4"><b>Class:</b> ${a.class_applying || '-'}</div>
-                    <div class="col-sm-4"><b>DOB:</b> ${a.date_of_birth || '-'}</div>
-                    <div class="col-sm-4"><b>Gender:</b> ${a.gender || '-'}</div>
-                    <div class="col-sm-4"><b>Parent/Guardian:</b> ${a.parent_name || '-'}</div>
-                    <div class="col-sm-4"><b>Relationship:</b> ${a.parent_relationship || '-'}</div>
-                    <div class="col-sm-4"><b>Occupation:</b> ${a.parent_occupation || '-'}</div>
-                    <div class="col-sm-4"><b>Phone:</b> ${a.parent_phone || '-'}</div>
-                    <div class="col-sm-4"><b>Email:</b> ${a.parent_email || '-'}</div>
-                    <div class="col-sm-12"><b>Student Home Address:</b> ${a.student_home_address || a.address || '-'}</div>
-                    <div class="col-sm-12"><b>Parent Home Address:</b> ${a.parent_home_address || '-'}</div>
+                    <div class="col-sm-4"><b>Application No:</b> ${escapeHtml(a.application_number || a.id)}</div>
+                    <div class="col-sm-4"><b>Status:</b> ${escapeHtml(a.status || 'Submitted')}</div>
+                    <div class="col-sm-4"><b>Session/Term:</b> ${escapeHtml(a.session_term || '-')}</div>
+                    <div class="col-sm-4"><b>Nationality:</b> ${escapeHtml(a.nationality || '-')}</div>
+                    <div class="col-sm-4"><b>Previous School:</b> ${escapeHtml(a.previous_school || '-')}</div>
+                    <div class="col-sm-4"><b>Class:</b> ${escapeHtml(a.class_applying || '-')}</div>
+                    <div class="col-sm-4"><b>DOB:</b> ${escapeHtml(a.date_of_birth || '-')}</div>
+                    <div class="col-sm-4"><b>Gender:</b> ${escapeHtml(a.gender || '-')}</div>
+                    <div class="col-sm-4"><b>Parent/Guardian:</b> ${escapeHtml(a.parent_name || '-')}</div>
+                    <div class="col-sm-4"><b>Relationship:</b> ${escapeHtml(a.parent_relationship || '-')}</div>
+                    <div class="col-sm-4"><b>Occupation:</b> ${escapeHtml(a.parent_occupation || '-')}</div>
+                    <div class="col-sm-4"><b>Phone:</b> ${escapeHtml(a.parent_phone || '-')}</div>
+                    <div class="col-sm-4"><b>Email:</b> ${escapeHtml(a.parent_email || '-')}</div>
+                    <div class="col-sm-12"><b>Student Home Address:</b> ${escapeHtml(a.student_home_address || a.address || '-')}</div>
+                    <div class="col-sm-12"><b>Parent Home Address:</b> ${escapeHtml(a.parent_home_address || '-')}</div>
                     <div class="col-sm-4"><b>Emergency Contact:</b> ${a.emergency_contact_name || '-'}</div>
                     <div class="col-sm-4"><b>Emergency Phone:</b> ${a.emergency_contact_phone || '-'}</div>
                     <div class="col-sm-4"><b>Emergency Relationship:</b> ${a.emergency_contact_relationship || '-'}</div>
@@ -417,6 +426,7 @@ async function loadAdmissions() {
                     <div class="col-sm-12"><b>Parent Signature:</b> ${a.parent_signature || '-'} <b class="ms-3">Date:</b> ${a.signature_date || '-'}</div>
                     <div class="col-sm-12"><b>Uploaded Documents:</b> ${[a.passport_photo_path, a.birth_certificate_path, a.previous_school_report_path].filter(Boolean).map(path => `<a class="me-3" href="${path}" target="_blank" rel="noopener">View document</a>`).join('') || '-'}</div>
                 </div>
+                ${renderAdmissionStatus(a.status, a.id)}
 <div class="d-flex gap-2 mt-2">
                     ${!a.is_read ? `<button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="markAdmissionRead(${a.id})">Mark as Read</button>` : ''}
                     ${a.status === 'Accepted' ? `<a class="btn btn-sm btn-outline-success rounded-pill" href="/admission-letter/${a.id}" target="_blank"><i class="fas fa-file-signature me-1"></i> Admission Letter</a>` : ''}
@@ -430,17 +440,28 @@ async function loadAdmissions() {
 }
 
 async function markAdmissionRead(id) {
-    await fetch('/api/admissions/' + id + '/read', {method: 'POST'});
-    loadAdmissions();
-    fetchNotificationCount();
+    try {
+        const response = await fetch('/api/admissions/' + id + '/read', {method: 'POST'});
+        const result = await response.json();
+        if (!response.ok || !result.success) throw new Error(result.message || 'Application not found');
+        await loadAdmissions();
+        fetchNotificationCount();
+    } catch (error) {
+        showStatus(error.message || 'Could not mark application as read', true);
+    }
 }
 
 async function updateAdmissionStatus(id, status) {
     const response = await fetch('/api/admissions/' + id + '/status', {
         method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({status})
     });
-    if (response.ok) showStatus('Application status updated');
-    else showStatus('Failed to update application status', true);
+    const result = await response.json();
+    if (response.ok && result.success) {
+        showStatus('Application status updated');
+        loadAdmissions();
+    } else {
+        showStatus(result.message || 'Failed to update application status', true);
+    }
 }
 
 // ============================================================
@@ -448,12 +469,22 @@ async function updateAdmissionStatus(id, status) {
 // ============================================================
 
 const postCatLabels = { news: 'News', blog: 'Blog', event: 'Event' };
+const admissionStatuses = ['Submitted', 'Under Review', 'Shortlisted', 'Accepted'];
+const admissionStatusButtons = ['Submitted', 'Under Review', 'Shortlisted', 'Waitlisted', 'Accepted', 'Rejected'];
+
+function renderAdmissionStatus(status, id) {
+    const current = status || 'Submitted';
+    const currentIndex = current === 'Rejected' || current === 'Waitlisted' ? 0 : Math.max(0, admissionStatuses.indexOf(current));
+    const steps = admissionStatuses.map((step, index) => `<div class="admission-status-step ${index < currentIndex ? 'done' : ''} ${index === currentIndex ? 'current' : ''}"><span class="admission-status-dot">${index < currentIndex ? '✓' : index + 1}</span><span class="d-block mt-1">${step}</span></div>`).join('');
+    const buttons = admissionStatusButtons.map(option => `<button type="button" class="btn btn-sm ${option === current ? 'btn-warning active' : 'btn-outline-light'}" onclick="updateAdmissionStatus(${id}, '${option}')">${option}</button>`).join('');
+    return `<div class="admission-status-panel"><div class="d-flex justify-content-between align-items-center"><strong>Status journey</strong><span class="badge bg-warning text-dark">${current}</span></div><div class="admission-status-track">${steps}</div><div class="admission-actions">${buttons}</div></div>`;
+}
 
 async function loadPosts() {
     const container = document.getElementById('posts_list');
     if (!container) return;
     try {
-        const res = await fetch('/api/posts');
+        const res = await fetch('/api/posts?include=all');
         const data = await res.json();
         if (!data.success) { container.innerHTML = '<p class="text-danger">Failed to load posts.</p>'; return; }
         const posts = data.data || [];
@@ -514,9 +545,14 @@ async function publishPost() {
         try {
             const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
             const uploadResult = await uploadRes.json();
-            if (uploadResult.success) image_path = uploadResult.path;
+            if (!uploadRes.ok || !uploadResult.success) {
+                showStatus(uploadResult.message || 'The news image could not be uploaded.', true);
+                return;
+            }
+            image_path = uploadResult.path;
         } catch(e) {
-            console.warn('Post image upload failed', e);
+            showStatus('The news image could not be uploaded.', true);
+            return;
         }
     }
 
@@ -542,7 +578,7 @@ async function publishPost() {
 }
 
 async function editPost(id) {
-    const response = await fetch('/api/posts');
+    const response = await fetch('/api/posts?include=all');
     const result = await response.json();
     const post = (result.data || []).find(item => item.id === id);
     if (!post) return showStatus('Post not found', true);
@@ -565,8 +601,18 @@ async function saveEditedPost(id, existingImagePath) {
     const imageInput = document.getElementById('post_image_input');
     if (imageInput?.files?.length) {
         const upload = new FormData(); upload.append('image', imageInput.files[0]); upload.append('key', 'post_temp');
-        const uploaded = await fetch('/api/upload', {method: 'POST', body: upload}).then(r => r.json());
-        if (uploaded.success) existingImagePath = uploaded.path;
+        try {
+            const uploadResponse = await fetch('/api/upload', {method: 'POST', body: upload});
+            const uploaded = await uploadResponse.json();
+            if (!uploadResponse.ok || !uploaded.success) {
+                showStatus(uploaded.message || 'The news image could not be uploaded.', true);
+                return;
+            }
+            existingImagePath = uploaded.path;
+        } catch (error) {
+            showStatus('The news image could not be uploaded.', true);
+            return;
+        }
     }
     const data = {
         title: document.getElementById('post_title').value.trim(),

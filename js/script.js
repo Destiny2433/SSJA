@@ -1,3 +1,7 @@
+// Shared sync state: the loader stays visible until all database requests settle.
+window.__syncTasks = 1;
+window.__finishSyncTask = () => { window.__syncTasks = Math.max(0, window.__syncTasks - 1); };
+
 // Standardize navigation across all public pages.
 document.addEventListener('DOMContentLoaded', () => {
     const list = document.querySelector('.navbar-nav');
@@ -5,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     list.innerHTML = `<li class="nav-item"><a class="nav-link" href="/">Home</a></li><li class="nav-item"><a class="nav-link" href="about">About Us</a></li><li class="nav-item dropdown"><a class="nav-link dropdown-toggle" href="academics" data-bs-toggle="dropdown">Academics</a><ul class="dropdown-menu"><li><a class="dropdown-item" href="academics">Overview</a></li><li><a class="dropdown-item" href="jss-subjects">JSS Subjects</a></li><li><a class="dropdown-item" href="education-facilities">Facilities</a></li><li><a class="dropdown-item" href="school-rules-regulations">Rules &amp; Regulations</a></li><li><a class="dropdown-item" href="disciplinary-measures">Discipline</a></li><li><a class="dropdown-item" href="education-anthem">Anthem</a></li></ul></li><li class="nav-item"><a class="nav-link" href="admissions">Admissions</a></li><li class="nav-item"><a class="nav-link" href="admission-form">Admission Form</a></li><li class="nav-item"><a class="nav-link" href="news">News &amp; Events</a></li><li class="nav-item"><a class="nav-link" href="gallery">Gallery</a></li><li class="nav-item"><a class="nav-link" href="contact">Contact</a></li><li class="nav-item"><a class="nav-link" href="https://schoolos.osartech.com.ng/" target="_blank" rel="noopener">Portal</a></li>`;
 });
 
-// Preloader Logic - Hide quickly after DOM ready, don't wait for all images
+// Preloader Logic - wait for database synchronization before hiding.
 document.addEventListener('DOMContentLoaded', () => {
     const preloader = document.createElement('div');
     preloader.id = 'preloader';
@@ -24,25 +28,15 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
     document.body.prepend(preloader);
     
-    // Hide preloader after max 800ms - don't wait for all images to load
-    setTimeout(() => {
+    const waitForSync = () => {
+        if (window.__syncTasks !== 0) return setTimeout(waitForSync, 100);
         const p = document.getElementById('preloader');
         if (p) {
             p.classList.add('hidden');
             setTimeout(() => { if (p.parentNode) p.remove(); }, 300);
         }
-    }, 800);
-});
-
-// Fallback: hide on window load too
-window.addEventListener('load', () => {
-    const preloader = document.getElementById('preloader');
-    if (preloader) {
-        preloader.classList.add('hidden');
-        setTimeout(() => {
-            if (preloader.parentNode) preloader.remove();
-        }, 300);
-    }
+    };
+    setTimeout(waitForSync, 0);
 });
 
 // Initialize AOS (Animate On Scroll) - with shorter duration
@@ -226,6 +220,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (!grid) return; // Only run on pages that have the grid (homepage)
 
     const catLabels = { news: 'News', blog: 'Blog', event: 'Event' };
+    window.__syncTasks++;
 
     try {
         const res = await fetch('/api/posts');
@@ -263,7 +258,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     } catch(e) {
         console.error('Error loading homepage posts', e);
         grid.innerHTML = '<div class="col-12 text-center text-muted py-5"><p>Unable to load updates at the moment.</p></div>';
-    }
+    } finally { window.__finishSyncTask(); }
 });
 
 // Navbar active state
@@ -393,5 +388,5 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     } catch(e) {
         console.error("Error loading dynamic content:", e);
-    }
+    } finally { window.__finishSyncTask(); }
 });

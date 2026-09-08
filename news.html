@@ -214,6 +214,12 @@
 
         const catLabels = { news: 'News', blog: 'Blog', event: 'Event' };
 
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>'"]/g, character => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            }[character]));
+        }
+
         async function loadPosts() {
             const grid = document.getElementById('postsGrid');
             try {
@@ -242,7 +248,7 @@
             }
             grid.innerHTML = filtered.map(p => {
                 const img = p.image_path
-                    ? `<img src="${p.image_path}" class="post-thumb" alt="${p.title || 'Post image'}">`
+                    ? `<img src="${escapeHtml(p.image_path)}" class="post-thumb" alt="${escapeHtml(p.title || 'Post image')}">`
                     : `<div class="post-thumb d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg,#003366,#0056b3);"><i class="fas fa-newspaper text-white" style="font-size:3rem;opacity:.6;"></i></div>`;
                 const excerpt = (p.content || '').length > 120 ? p.content.substring(0, 120) + '...' : (p.content || '');
                 return `
@@ -250,12 +256,12 @@
                         <div class="card post-card shadow-sm">
                             <div class="position-relative">
                                 ${img}
-                                <span class="post-cat-badge">${catLabels[p.category] || 'News'}</span>
+                                <span class="post-cat-badge">${escapeHtml(catLabels[p.category] || 'News')}</span>
                             </div>
                             <div class="post-body">
-                                ${p.date ? `<small class="text-muted"><i class="far fa-calendar-alt me-1"></i>${p.date}</small>` : ''}
-                                <h5 class="fw-bold mt-1 mb-2" style="color:var(--primary-color);">${p.title || 'Untitled'}</h5>
-                                <p class="post-excerpt">${excerpt}</p>
+                                ${p.date ? `<small class="text-muted"><i class="far fa-calendar-alt me-1"></i>${escapeHtml(p.date)}</small>` : ''}
+                                <h5 class="fw-bold mt-1 mb-2" style="color:var(--primary-color);">${escapeHtml(p.title || 'Untitled')}</h5>
+                                <p class="post-excerpt">${escapeHtml(excerpt)}</p>
                                 <a href="/post/${p.id}" class="btn btn-primary btn-sm mt-3 rounded-pill">Learn more</a>
                             </div>
                         </div>

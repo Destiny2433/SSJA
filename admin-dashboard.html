@@ -448,22 +448,22 @@
 
         // Setup Push Notifications
         async function setupPushNotifications(swReg) {
-            if (!('PushManager' in window)) return;
+            if (!('PushManager' in window) || !('Notification' in window) || Notification.permission === 'denied') return;
             try {
                 const keyRes = await fetch('/api/vapid-public-key');
                 const keyData = await keyRes.json();
                 const publicKey = keyData.publicKey;
                 if (!publicKey) return;
 
-                // Check permission
-                const permission = await Notification.requestPermission();
+                let permission = Notification.permission;
+                if (permission === 'default') permission = await Notification.requestPermission();
                 if (permission !== 'granted') return;
 
-                // Subscribe
-                const sub = await swReg.pushManager.subscribe({
-                    userVisibleOnly: true,
-                    applicationServerKey: urlBase64ToUint8Array(publicKey)
-                });
+                let sub = await swReg.pushManager.getSubscription();
+                if (!sub) sub = await swReg.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: urlBase64ToUint8Array(publicKey)
+                    });
 
                 // Send subscription to server
                 await fetch('/api/subscribe', {

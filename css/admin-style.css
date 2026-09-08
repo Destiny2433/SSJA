@@ -172,6 +172,17 @@
             transition: var(--transition);
         }
         .admin-card:hover { border-color: rgba(212,168,83,0.25); }
+        .admission-status-panel { background: rgba(15,23,42,0.55); border: 1px solid var(--admin-border); border-radius: 14px; padding: 16px; margin-top: 16px; }
+        .admission-status-track { display: flex; gap: 0; margin: 10px 0 16px; }
+        .admission-status-step { position: relative; flex: 1; text-align: center; color: var(--text-dim); font-size: .7rem; }
+        .admission-status-step:not(:last-child)::after { content: ''; position: absolute; top: 12px; left: 58%; width: 84%; height: 2px; background: rgba(148,163,184,.25); }
+        .admission-status-step.done:not(:last-child)::after { background: var(--success); }
+        .admission-status-dot { position: relative; z-index: 1; display: inline-flex; align-items: center; justify-content: center; width: 25px; height: 25px; border-radius: 50%; background: #334155; color: #cbd5e1; font-size: .7rem; }
+        .admission-status-step.done, .admission-status-step.current { color: var(--text-main); font-weight: 700; }
+        .admission-status-step.done .admission-status-dot, .admission-status-step.current .admission-status-dot { background: var(--success); color: #07111f; }
+        .admission-status-step.current .admission-status-dot { box-shadow: 0 0 0 4px rgba(46,196,182,.18); }
+        .admission-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+        .admission-actions .btn.active { box-shadow: 0 0 0 2px rgba(212,168,83,.4); }
         .card-header {
             display: flex; align-items: center; justify-content: space-between;
             flex-wrap: wrap; gap: 14px; margin-bottom: 20px;

@@ -326,7 +326,7 @@
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label fw-bold">Session/Term</label>
-                                        <select class="form-select" name="gender" required>
+                                        <select class="form-select" name="session_term" required>
                                         <option value="2026/2027 first term">2026/2027 First Term</option>
                                         <option value="2026/2027 Second term">2026/2027  Second Term</option>
                                         <option value="2026/2027 Third Term">2026/2027  Third Term</option>
@@ -696,6 +696,9 @@
                     body: JSON.stringify(data)
                 });
                 const result = await res.json();
+                if (!res.ok || !result.success) {
+                    throw new Error(result.message || 'Admission submission failed');
+                }
                 statusBox.className = 'alert alert-success mb-4';
                 statusBox.innerHTML = `<strong>Application submitted successfully!</strong> Your application number is <strong>${result.application_number || 'pending'}</strong>. Keep it for tracking. Go to <a href="/applicant-dashboard.html">Applicant Dashboard Page</a>`;
                 statusBox.classList.remove('d-none');

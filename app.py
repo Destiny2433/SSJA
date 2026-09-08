@@ -2,7 +2,9 @@ import os
 import json
 import time
 import uuid
-from datetime import datetime
+import copy
+import re
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from flask import Flask, request, jsonify, send_from_directory, session, redirect, Response
@@ -16,9 +18,14 @@ from firestore_placeholder import DEFAULT_GALLERY, get_placeholder_store
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'local-development-secret-change-me')
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=3650)
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 SITE_URL = os.getenv('SITE_URL', 'https://ssja.onrender.com').rstrip('/')
+if SITE_URL.endswith('/index.html'):
+    SITE_URL = SITE_URL[:-10]
 
 BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_FOLDER = BASE_DIR / 'images' / 'uploads'
@@ -66,16 +73,12 @@ def initialize_firebase():
         _firestore_client = fs.client()
         # Hydrate the in-memory working copy from Firestore.
         snapshot = _firestore_client.collection('site_data').document('store').get()
-        if snapshot.exists:
-            persisted = snapshot.to_dict() or {}
-            for key, value in persisted.items():
-                if isinstance(value, list):
-                    STORE[key] = value
-                elif value is not None:
-                    STORE[key] = value
-        if not STORE.get('gallery'):
-            STORE['gallery'] = DEFAULT_GALLERY.copy()
-            _firestore_client.collection('site_data').document('store').set(STORE)
+        persisted = snapshot.to_dict() if snapshot.exists else {}
+        STORE.clear()
+        STORE.update(normalize_store(persisted))
+        # Create/migrate one canonical document. This prevents local and Render
+        # workers from silently using different incomplete store shapes.
+        _firestore_client.collection('site_data').document('store').set(dict(STORE))
         return True
     except Exception as exc:
         _firestore_client = None
@@ -84,6 +87,38 @@ def initialize_firebase():
 
 
 STORE = get_placeholder_store()
+
+
+def normalize_store(data):
+    """Keep every worker on the same document shape after a deploy or migration."""
+    defaults = get_placeholder_store()
+    normalized = copy.deepcopy(defaults)
+    normalized.update(data or {})
+    for key, default in defaults.items():
+        if normalized.get(key) is None:
+            normalized[key] = copy.deepcopy(default)
+    return normalized
+
+
+def sync_configured_admin(store):
+    """Keep the configured deployment admin usable after credential changes."""
+    username = os.getenv('ADMIN_USERNAME', '').strip()
+    password = os.getenv('ADMIN_PASSWORD', '')
+    if not username or not password:
+        return
+    admins = store.setdefault('admins', [])
+    admin = next((item for item in admins if item.get('username') == username), None)
+    if admin is None:
+        admins.append({
+            'id': max((item.get('id', 0) for item in admins), default=0) + 1,
+            'username': username,
+            'password_hash': generate_password_hash(password),
+        })
+        return
+    if not check_password_hash(admin.get('password_hash', ''), password):
+        admin['password_hash'] = generate_password_hash(password)
+
+
 initialize_firebase()
 
 @app.after_request
@@ -126,14 +161,18 @@ def get_store():
     if snapshot.exists:
         persisted = snapshot.to_dict() or {}
         STORE.clear()
-        STORE.update(persisted)
+        STORE.update(normalize_store(persisted))
+        sync_configured_admin(STORE)
+    else:
+        STORE.clear()
+        STORE.update(normalize_store({}))
     return STORE
 
 
 def save_store():
     if _firestore_client is None:
         raise RuntimeError('Persistent Firestore storage is unavailable')
-    _firestore_client.collection('site_data').document('store').set(dict(STORE))
+    _firestore_client.collection('site_data').document('store').set(normalize_store(STORE))
 
 
 def upload_to_firebase_storage(file, filename, content_type):
@@ -151,6 +190,37 @@ def upload_to_firebase_storage(file, filename, content_type):
         raise RuntimeError('The file could not be saved to Firebase Storage') from exc
 
 
+def upload_to_local_storage(file, filename):
+    """Save editor-managed images in the workspace uploads directory."""
+    UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
+    destination = UPLOAD_FOLDER / filename
+    file.stream.seek(0)
+    file.save(destination)
+    return f'/images/uploads/{filename}'
+
+
+def validate_uploaded_file(file, allowed_extensions, allowed_mimetypes):
+    if not file or not file.filename:
+        return 'No file selected'
+    extension = Path(file.filename).suffix.lower()
+    if extension not in allowed_extensions:
+        return 'Unsupported file type'
+    if (file.mimetype or '').lower() not in allowed_mimetypes:
+        return 'Unsupported file MIME type'
+    file.stream.seek(0, os.SEEK_END)
+    size = file.stream.tell()
+    file.stream.seek(0)
+    if size == 0:
+        return 'The uploaded file is empty'
+    if size > 10 * 1024 * 1024:
+        return 'The uploaded file is too large'
+    return None
+
+
+def valid_email(value):
+    return bool(re.fullmatch(r'[^@\s]+@[^@\s]+\.[^@\s]+', str(value or '').strip()))
+
+
 def get_next_id(items):
     return max((item.get('id', 0) for item in items), default=0) + 1
 
@@ -160,7 +230,8 @@ def send_push_notification(title, body, url='/admin-dashboard'):
         return
     try:
         from pywebpush import webpush
-        for subscription_json in get_store().get('push_subscriptions', []):
+        subscriptions = get_store().get('push_subscriptions', [])
+        for subscription_json in subscriptions:
             try:
                 webpush(
                     subscription_info=json.loads(subscription_json),
@@ -169,9 +240,9 @@ def send_push_notification(title, body, url='/admin-dashboard'):
                     vapid_claims=VAPID_CLAIMS,
                 )
             except Exception as exc:
-                print(f"Push failed for subscription: {exc}")
-    except ImportError:
-        print("pywebpush not installed. Skipping push notifications.")
+                app.logger.warning('Push delivery failed: %s', exc)
+    except Exception as exc:
+        app.logger.warning('Push notifications unavailable: %s', exc)
 
 
 @app.route('/')
@@ -203,7 +274,7 @@ def static_route(filename):
 def login():
     data = request.get_json() or {}
     admin = next((a for a in get_store().get('admins', []) if a.get('username') == data.get('username')), None)
-    if admin and check_password_hash(admin['password_hash'], data.get('password', '')):
+    if admin and check_password_hash(admin.get('password_hash', ''), str(data.get('password', ''))):
         session['admin_logged_in'] = True
         session.permanent = True
         return jsonify({"success": True})
@@ -220,7 +291,9 @@ def logout():
 def subscribe():
     if not session.get('admin_logged_in'):
         return jsonify({"success": False, "message": "Unauthorized"}), 401
-    subscription = request.get_json().get('subscription')
+    subscription = (request.get_json() or {}).get('subscription')
+    if not isinstance(subscription, dict) or not subscription.get('endpoint'):
+        return jsonify({"success": False, "message": "A valid push subscription is required"}), 400
     subscriptions = get_store().setdefault('push_subscriptions', [])
     sub_json = json.dumps(subscription, sort_keys=True)
     if sub_json not in subscriptions:
@@ -273,8 +346,10 @@ def robots_txt():
 
 @app.route('/sitemap.xml')
 def sitemap_xml():
-    public_pages = ['/', '/about', '/academics', '/admissions', '/admission-form', '/news', '/gallery', '/contact']
-    urls = ''.join(f'<url><loc>{SITE_URL}{page}</loc></url>' for page in public_pages)
+    public_pages = ['/', '/about', '/academics', '/education-facilities', '/education-staff',
+                    '/education-anthem', '/school-rules-regulations', '/disciplinary-measures',
+                    '/admissions', '/admission-form', '/jss-subjects', '/news', '/gallery', '/contact']
+    urls = ''.join(f'<url><loc>{SITE_URL}{page}</loc><changefreq>weekly</changefreq><priority>{"1.0" if page == "/" else "0.7"}</priority></url>' for page in public_pages)
     return Response(
         f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>',
         mimetype='application/xml',
@@ -290,6 +365,7 @@ def health_check():
         "firebase": connected,
         "database": "Firestore" if connected else None,
         "storage": "Firebase Storage" if connected else None,
+        "push_notifications": bool(VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY),
         "message": "Firestore and Firebase Storage are connected." if connected else "Configure Firebase persistence before accepting changes."
     }), (200 if connected else 503)
 
@@ -346,15 +422,21 @@ def upload_file():
     if not file.filename or not key:
         return jsonify({"success": False, "message": "Missing file or key"}), 400
     allowed = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
-    extension = Path(file.filename).suffix.lower()
-    if extension not in allowed or not (file.mimetype or '').startswith('image/'):
-        return jsonify({"success": False, "message": "Only JPG, PNG, WEBP or GIF images are allowed"}), 400
+    validation_error = validate_uploaded_file(file, allowed, {'image/jpeg', 'image/png', 'image/webp', 'image/gif'})
+    if validation_error:
+        return jsonify({"success": False, "message": validation_error}), 400
 
     filename = f"{int(time.time())}_{uuid.uuid4().hex[:8]}_{secure_filename(file.filename)}"
     try:
-        relative_path = upload_to_firebase_storage(file, filename, file.mimetype)
+        if key == 'post_temp':
+            relative_path = upload_to_local_storage(file, filename)
+        else:
+            relative_path = upload_to_firebase_storage(file, filename, file.mimetype)
     except RuntimeError as exc:
         return jsonify({"success": False, "message": str(exc)}), 503
+    except OSError:
+        app.logger.exception('Local image upload failed')
+        return jsonify({"success": False, "message": "The image could not be saved"}), 500
     store = get_store()
 
     if key == 'gallery':
@@ -385,13 +467,12 @@ def upload_admission_document():
     file = request.files.get('file')
     document_type = request.form.get('document_type', 'document')
     allowed_types = {'birth_certificate', 'previous_school_report', 'passport_photograph'}
-    if not file or not file.filename:
-        return jsonify({"success": False, "message": "No document selected"}), 400
     if document_type not in allowed_types:
         return jsonify({"success": False, "message": "Invalid document type"}), 400
     allowed = {'.jpg', '.jpeg', '.png', '.webp', '.pdf'}
-    if Path(file.filename).suffix.lower() not in allowed:
-        return jsonify({"success": False, "message": "Allowed documents: PDF, JPG, PNG or WEBP"}), 400
+    validation_error = validate_uploaded_file(file, allowed, {'image/jpeg', 'image/png', 'image/webp', 'application/pdf'})
+    if validation_error:
+        return jsonify({"success": False, "message": validation_error}), 400
 
     filename = f"admission_{document_type}_{uuid.uuid4().hex[:12]}_{secure_filename(file.filename)}"
     try:
@@ -417,6 +498,10 @@ def delete_gallery_item(item_id):
 @app.route('/api/contact', methods=['POST'])
 def contact():
     data = request.get_json() or {}
+    if any(not str(data.get(field, '')).strip() for field in ('name', 'email', 'message')):
+        return jsonify({"success": False, "message": "Name, email, and message are required"}), 400
+    if not valid_email(data.get('email')):
+        return jsonify({"success": False, "message": "Enter a valid email address"}), 400
     timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
 
     store = get_store()
@@ -431,13 +516,12 @@ def contact():
         "submitted_at": timestamp,
     })
 
+    save_store()
     send_push_notification(
-        title="📩 New Contact Message",
+        title="New Contact Message",
         body=f"From {data.get('name', 'Someone')}: {data.get('subject', 'No subject')}",
         url="/admin-dashboard",
     )
-
-    save_store()
 
     return jsonify({"success": True, "message": "Message received!"})
 
@@ -457,10 +541,14 @@ def mark_message_read(msg_id):
         return jsonify({"success": False}), 401
 
     store = get_store()
+    found = False
     for message in store.get('messages', []):
         if message.get('id') == msg_id:
             message['is_read'] = 1
+            found = True
             break
+    if not found:
+        return jsonify({"success": False, "message": "Message not found"}), 404
     save_store()
     return jsonify({"success": True})
 
@@ -483,7 +571,7 @@ def submit_admission():
     required = ('student_name', 'date_of_birth', 'gender', 'class_applying', 'parent_name', 'parent_phone', 'parent_email', 'student_home_address')
     if any(not str(data.get(field, '')).strip() for field in required):
         return jsonify({"success": False, "message": "Please complete all required admission fields"}), 400
-    if '@' not in str(data.get('parent_email', '')) or len(str(data.get('parent_phone', ''))) < 7:
+    if not valid_email(data.get('parent_email')) or len(re.sub(r'\D', '', str(data.get('parent_phone', '')))) < 7:
         return jsonify({"success": False, "message": "Enter a valid parent email and phone number"}), 400
     timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
 
@@ -524,13 +612,12 @@ def submit_admission():
         "previous_school_report_path": data.get('previous_school_report_path', ''),
     })
 
+    save_store()
     send_push_notification(
-        title="🎓 New Admission Application",
+        title="New Admission Application",
         body=f"{data.get('student_name', 'A student')} applied for {data.get('class_applying', 'a class')}",
         url="/admin-dashboard",
     )
-
-    save_store()
 
     return jsonify({
         "success": True,
@@ -554,10 +641,14 @@ def mark_admission_read(app_id):
         return jsonify({"success": False}), 401
 
     store = get_store()
+    found = False
     for admission in store.get('admissions', []):
         if admission.get('id') == app_id:
             admission['is_read'] = 1
+            found = True
             break
+    if not found:
+        return jsonify({"success": False, "message": "Application not found"}), 404
     save_store()
     return jsonify({"success": True})
 
@@ -604,6 +695,7 @@ def applicant_dashboard():
         "class_applying": admission.get('class_applying'),
         "status": admission.get('status', 'Submitted'),
         "submitted_at": admission.get('submitted_at'),
+        "status_updated_at": admission.get('status_updated_at'),
     }})
 
 
@@ -629,16 +721,26 @@ def admission_letter(app_id):
 @app.route('/api/posts', methods=['GET'])
 def get_posts():
     now = datetime.now().isoformat(timespec='minutes')
-    posts = [p for p in get_store().get('posts', [])
-             if p.get('status', 'published') == 'published'
-             and (not p.get('scheduled_for') or p['scheduled_for'] <= now)]
+    all_posts = get_store().get('posts', [])
+    if session.get('admin_logged_in') and request.args.get('include') == 'all':
+        posts = list(all_posts)
+    else:
+        posts = [p for p in all_posts
+                 if p.get('status', 'published') == 'published'
+                 and (not p.get('scheduled_for') or p['scheduled_for'] <= now)]
     posts = sorted(posts, key=lambda x: x.get('id', 0), reverse=True)
     return jsonify({"success": True, "data": posts})
 
 
 @app.route('/api/posts/<int:post_id>', methods=['GET'])
 def get_post(post_id):
-    post = next((p for p in get_store().get('posts', []) if p.get('id') == post_id), None)
+    now = datetime.now().isoformat(timespec='minutes')
+    post = next((p for p in get_store().get('posts', [])
+                 if p.get('id') == post_id
+                 and (session.get('admin_logged_in') or (
+                     p.get('status', 'published') == 'published'
+                     and (not p.get('scheduled_for') or p['scheduled_for'] <= now)
+                 ))), None)
     if not post:
         return jsonify({"success": False, "error": "Post not found"}), 404
     post.pop('views', None)
@@ -656,6 +758,10 @@ def create_post():
         return jsonify({"success": False, "message": "Title is required"}), 400
     if not data.get('content'):
         return jsonify({"success": False, "message": "Content is required"}), 400
+    if data.get('category', 'news') not in {'news', 'blog', 'event'}:
+        return jsonify({"success": False, "message": "Invalid post category"}), 400
+    if data.get('status', 'published') not in {'draft', 'published'}:
+        return jsonify({"success": False, "message": "Invalid post status"}), 400
 
     store = get_store()
     posts = store.setdefault('posts', [])
@@ -690,6 +796,14 @@ def update_post(post_id):
         return jsonify({"success": False, "message": "Unauthorized"}), 401
 
     data = request.get_json() or {}
+    if 'title' in data and not str(data['title']).strip():
+        return jsonify({"success": False, "message": "Title is required"}), 400
+    if 'content' in data and not str(data['content']).strip():
+        return jsonify({"success": False, "message": "Content is required"}), 400
+    if 'category' in data and data['category'] not in {'news', 'blog', 'event'}:
+        return jsonify({"success": False, "message": "Invalid post category"}), 400
+    if 'status' in data and data['status'] not in {'draft', 'published'}:
+        return jsonify({"success": False, "message": "Invalid post status"}), 400
     for post in get_store().get('posts', []):
         if post.get('id') == post_id:
             for key in ('title', 'category', 'content', 'image_path', 'author', 'status', 'scheduled_for'):

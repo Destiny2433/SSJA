@@ -764,6 +764,12 @@ footer .d-flex.gap-3 a:hover {
     transition: opacity 0.5s ease, visibility 0.5s ease;
 }
 
+a { text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 3px solid rgba(255, 193, 7, .75);
+    outline-offset: 3px;
+}
+
 #preloader.hidden {
     opacity: 0;
     visibility: hidden;

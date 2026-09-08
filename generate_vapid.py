@@ -1,6 +1,6 @@
 """
-Run this script ONCE to generate your VAPID keys for push notifications.
-Then paste the output into app.py.
+Run this script once to generate VAPID keys for push notifications.
+Put the printed values in server environment variables, never in frontend files.
 """
 from py_vapid import Vapid
 
@@ -31,5 +31,7 @@ priv = vapid.private_key.private_bytes(
 import base64
 pub_b64 = base64.urlsafe_b64encode(pub).rstrip(b'=').decode()
 print(f"VAPID_PUBLIC_KEY = '{pub_b64}'")
+print("VAPID_PRIVATE_KEY = <<contents of vapid_private.pem>>")
+print(priv.decode().strip())
 print()
-print("Copy those lines above and put in app.py where VAPID_PUBLIC_KEY is defined.")
+print("Set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY in .env or Render environment variables.")

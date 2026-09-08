@@ -59,3 +59,31 @@ self.addEventListener("fetch", event => {
     return response;
   }).catch(() => caches.match(event.request)));
 });
+
+self.addEventListener('push', event => {
+  let data = { title: 'SS Joachim and Anne', body: 'Your application status has been updated.', url: '/admission-dashboard' };
+  if (event.data) {
+    try { data = { ...data, ...event.data.json() }; } catch (error) { /* Keep the default notification. */ }
+  }
+  event.waitUntil(self.registration.showNotification(data.title, {
+    body: data.body,
+    icon: '/images/logo.png',
+    badge: '/images/logo.png',
+    tag: 'sjacs-applicant-notification',
+    data: { url: data.url || '/admission-dashboard' }
+  }));
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url || '/admission-dashboard';
+  event.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+    for (const client of clientList) {
+      if ('focus' in client) {
+        client.navigate(targetUrl);
+        return client.focus();
+      }
+    }
+    return clients.openWindow(targetUrl);
+  }));
+});

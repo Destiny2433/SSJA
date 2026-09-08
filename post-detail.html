@@ -23,7 +23,7 @@
     <style>
         .article-shell { max-width: 980px; margin: 0 auto; }
         .article-image { display: block; width: 100%; height: auto; max-height: none; object-fit: contain; border-radius: 18px; }
-        .article-body { line-height: 1.9; color: #2c3e50; font-size: 1.05rem; }
+        .article-body { line-height: 1.9; color: #2c3e50; font-size: 1.05rem; white-space: pre-wrap; }
     </style>
 </head>
 <body>
@@ -80,6 +80,12 @@
             const imageWrap = document.getElementById('postImageWrap');
             const bodyEl = document.getElementById('postBody');
 
+            function escapeHtml(value) {
+                return String(value ?? '').replace(/[&<>'"]/g, character => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+                }[character]));
+            }
+
             const pathParts = window.location.pathname.split('/');
             const postId = pathParts[pathParts.length - 1];
 
@@ -100,16 +106,16 @@
                 document.head.appendChild(canonical);
                 document.querySelector('meta[property="og:title"]').setAttribute('content', document.title);
                 document.querySelector('meta[property="og:url"]').setAttribute('content', canonical.href);
-                metaEl.innerHTML = `${post.date ? '<i class="far fa-calendar-alt me-1"></i>' + post.date : ''} ${post.author ? '<span class="ms-3"><i class="far fa-user me-1"></i>' + post.author + '</span>' : ''} <span class="badge bg-primary ms-2">${catLabels[post.category] || 'News'}</span>`;
+                metaEl.innerHTML = `${post.date ? '<i class="far fa-calendar-alt me-1"></i>' + escapeHtml(post.date) : ''} ${post.author ? '<span class="ms-3"><i class="far fa-user me-1"></i>' + escapeHtml(post.author) + '</span>' : ''} <span class="badge bg-primary ms-2">${escapeHtml(catLabels[post.category] || 'News')}</span>`;
 
                 if (post.image_path) {
                     const imagePath = post.image_path.startsWith('/') ? post.image_path : '/' + post.image_path;
-                    imageWrap.innerHTML = `<img src="${imagePath}" alt="${post.title || 'Article image'}" class="article-image shadow-sm mb-4">`;
+                    imageWrap.innerHTML = `<img src="${escapeHtml(imagePath)}" alt="${escapeHtml(post.title || 'Article image')}" class="article-image shadow-sm mb-4">`;
                 } else {
                     imageWrap.innerHTML = '';
                 }
 
-                bodyEl.innerHTML = (post.content || '').replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+                bodyEl.textContent = post.content || '';
             } catch (error) {
                 article.innerHTML = '<div class="text-center py-5 text-muted"><h3>Article not found</h3><p>The requested update could not be loaded.</p></div>';
                 console.error(error);
