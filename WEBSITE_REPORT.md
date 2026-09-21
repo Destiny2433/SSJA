@@ -46,19 +46,20 @@ The project is a multi-page school website with a public-facing site, an adminis
 - PDF export support for administrative data.
 - Save controls are now shown for every dashboard section.
 
-## 4. Important implementation notes
+## 4. Simple application architecture
 
-- Firestore is now the only application data store; SQLite has been removed.
-- The application keeps a working in-memory copy of the Firestore document and synchronizes changes back to Firestore.
-- Default gallery items are seeded when the Firestore gallery is empty.
-- Uploaded files are currently written to the server filesystem while their paths are stored in Firestore.
+- Visitors use a normal HTML website and do not see database, Firebase, or storage messages.
+- Firestore works quietly behind the site as the database for admissions, messages, news, gallery records, and editable content.
+- Uploaded images and admission documents are saved in `images/uploads`; their paths are stored with the related records.
+- The admin dashboard is the only place for managing content and applications.
+- If a backend service is temporarily unavailable, the public pages show a simple retry message rather than technical details.
 
 ## 5. Items to verify before handover
 
 1. Change the default administrator password from `admin123`.
 2. Confirm the Firebase service-account credential is not committed or publicly exposed.
 3. Configure a strong production `SECRET_KEY`.
-4. Move uploads to Firebase Storage or another persistent storage service.
+4. Add persistent disk or external file storage if deploying on a platform with ephemeral filesystems.
 5. Add upload file-size, extension, and MIME-type validation.
 6. Test contact messages on the deployed server.
 7. Test admission submissions, document uploads, and applicant tracking.
@@ -81,18 +82,18 @@ Use a local `.env` file for development and Render Environment Variables for pro
 | `FIREBASE_CREDENTIAL_PATH` | Local path to the Firebase service-account JSON file. |
 | `FIREBASE_SERVICE_ACCOUNT_JSON` | Complete Firebase service-account JSON for Render. Prefer this over a file upload. |
 | `FIREBASE_PROJECT_ID` | Firebase project identifier for documentation and deployment configuration. |
-| `FIREBASE_STORAGE_BUCKET` | Firebase Storage bucket for persistent images and admission documents. |
+| `UPLOAD_FOLDER` | Optional local upload directory; defaults to `images/uploads`. |
 | `VAPID_PUBLIC_KEY` | Public Web Push key sent to browsers during subscription. |
 | `VAPID_PRIVATE_KEY` | Server-only Web Push signing key. Never expose it in HTML or JavaScript. |
 | `VAPID_SUBJECT` | Administrator contact identity, for example `mailto:admin@example.com`. |
 
 ### Local setup
 
-Copy `.env.example` to `.env`, fill in the values, place `firebase-service-account.json` in the project root, and set `FIREBASE_STORAGE_BUCKET`. Generate push keys with `python generate_vapid.py`, then put both printed keys in `.env`. Start with `python app.py` and check `http://127.0.0.1:7000/api/health`.
+Copy `.env.example` to `.env`, fill in the values, place `firebase-service-account.json` in the project root, and ensure `images/uploads` is writable. Generate push keys with `python generate_vapid.py`, then put both printed keys in `.env`. Start with `python app.py` and check `http://127.0.0.1:7000/api/health`.
 
-The configured `ADMIN_USERNAME` and `ADMIN_PASSWORD` are synchronized to the administrator record when the server starts. If the password is changed in `.env`, stop and restart the local server before logging in. The same rule applies after changing Render environment variables: redeploy or restart the service.
+The configured `ADMIN_USERNAME` and `ADMIN_PASSWORD` are synchronized to the administrator record when the server starts. The admin session survives normal server restarts as long as `SECRET_KEY` stays unchanged. The administrator must use the dashboard's Logout button to end the session.
 
-After a successful admin login, the session is kept for up to 10 years and is not automatically cleared by normal page navigation, refreshes, or push-notification setup. The administrator must use the dashboard's **Logout** button to end the session. Restarting the server or changing `SECRET_KEY` invalidates existing sessions for security.
+After a successful admin login, the session is kept for up to 10 years and is not automatically cleared by normal page navigation, refreshes, or push-notification setup. Changing `SECRET_KEY` invalidates old sessions because it protects the login cookie; keep it unchanged during ordinary restarts.
 
 ### Render setup
 
@@ -105,13 +106,12 @@ ADMIN_PASSWORD=<strong-production-password>
 SITE_URL=https://your-render-domain.onrender.com
 FIREBASE_SERVICE_ACCOUNT_JSON=<complete Firebase service-account JSON>
 FIREBASE_PROJECT_ID=<Firebase project ID>
-FIREBASE_STORAGE_BUCKET=<Firebase Storage bucket name>
 VAPID_PUBLIC_KEY=<generated VAPID public key>
 VAPID_PRIVATE_KEY=<generated VAPID private key>
 VAPID_SUBJECT=mailto:<monitored-school-email>
 ```
 
-Do not set `FIREBASE_CREDENTIAL_PATH` on Render when using `FIREBASE_SERVICE_ACCOUNT_JSON`. Keep the existing `gunicorn app:app` start command. After deployment, check `/api/health`; Firestore must be connected, Firebase Storage must be configured, and `push_notifications` must be `true` before relying on admissions, uploads, or notifications.
+Do not set `FIREBASE_CREDENTIAL_PATH` on Render when using `FIREBASE_SERVICE_ACCOUNT_JSON`. Keep the existing `gunicorn app:app` start command. After deployment, check `/api/health`; Firestore must be connected and `push_notifications` must be `true` before relying on admissions or notifications. Uploaded files use the local filesystem, so use a persistent disk or external storage before deploying where files can be lost on restart.
 
 ### Push test
 
@@ -121,7 +121,7 @@ Push requires HTTPS in production, a supported browser, notification permission,
 
 ### High priority
 
-- Firebase Storage integration for permanent media files.
+- Persistent disk or external file storage for uploads on production hosts with ephemeral filesystems.
 - Admin password change and password reset.
 - Role-based admin accounts, such as editor, admissions officer, and super administrator.
 - Firestore audit log showing who changed content and when.

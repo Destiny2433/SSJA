@@ -28,7 +28,9 @@ if SITE_URL.endswith('/index.html'):
     SITE_URL = SITE_URL[:-10]
 
 BASE_DIR = Path(__file__).resolve().parent
-UPLOAD_FOLDER = BASE_DIR / 'images' / 'uploads'
+UPLOAD_FOLDER = Path(os.getenv('UPLOAD_FOLDER', str(BASE_DIR / 'images' / 'uploads')))
+if not UPLOAD_FOLDER.is_absolute():
+    UPLOAD_FOLDER = BASE_DIR / UPLOAD_FOLDER
 UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
 FIREBASE_CREDENTIAL_PATH = os.environ.get(
     'FIREBASE_CREDENTIAL_PATH',
@@ -41,12 +43,11 @@ _firestore_client = None
 
 try:
     import firebase_admin
-    from firebase_admin import credentials, firestore as fs, storage as firebase_storage
+    from firebase_admin import credentials, firestore as fs
 except ImportError:
     firebase_admin = None
     credentials = None
     fs = None
-    firebase_storage = None
 
 
 def initialize_firebase():
@@ -66,9 +67,6 @@ def initialize_firebase():
 
         if not firebase_admin._apps:
             options = {}
-            storage_bucket = os.getenv('FIREBASE_STORAGE_BUCKET', '').strip()
-            if storage_bucket:
-                options['storageBucket'] = storage_bucket
             firebase_admin.initialize_app(credential, options)
         _firestore_client = fs.client()
         # Hydrate the in-memory working copy from Firestore.
@@ -136,13 +134,13 @@ def persistent_storage_error(error):
     if request.path.startswith('/api/'):
         return jsonify({
             'success': False,
-            'message': 'Persistent database storage is unavailable. Configure Firebase before using this feature.'
+            'message': 'This service is temporarily unavailable. Please try again shortly.'
         }), 503
-    return 'Persistent database storage is unavailable.', 503
+    return 'This service is temporarily unavailable. Please try again shortly.', 503
 
 VAPID_PUBLIC_KEY = os.getenv('VAPID_PUBLIC_KEY', '')
 VAPID_PRIVATE_KEY = os.getenv('VAPID_PRIVATE_KEY', '')
-VAPID_CLAIMS = {"sub": os.getenv('VAPID_SUBJECT', "mailto:admin@sjacs.edu.ng")}
+VAPID_CLAIMS = {"sub": os.getenv('VAPID_SUBJECT', "mailto:okonudestiny4@gmail.com")}
 
 PAGES = {
     'index', 'about', 'academics', 'education-facilities', 'education-staff',
@@ -173,21 +171,6 @@ def save_store():
     if _firestore_client is None:
         raise RuntimeError('Persistent Firestore storage is unavailable')
     _firestore_client.collection('site_data').document('store').set(normalize_store(STORE))
-
-
-def upload_to_firebase_storage(file, filename, content_type):
-    """Persist an uploaded file outside Render's ephemeral filesystem."""
-    if _firestore_client is None or firebase_storage is None:
-        raise RuntimeError('Persistent Firebase storage is unavailable')
-    try:
-        bucket = firebase_storage.bucket()
-        blob = bucket.blob(f'uploads/{filename}')
-        blob.upload_from_file(file.stream, content_type=content_type or 'application/octet-stream')
-        blob.make_public()
-        return blob.public_url
-    except Exception as exc:
-        app.logger.error('Firebase Storage upload failed: %s', exc)
-        raise RuntimeError('The file could not be saved to Firebase Storage') from exc
 
 
 def upload_to_local_storage(file, filename):
@@ -364,9 +347,9 @@ def health_check():
         "status": "connected" if connected else "unavailable",
         "firebase": connected,
         "database": "Firestore" if connected else None,
-        "storage": "Firebase Storage" if connected else None,
+        "storage": "Local uploads folder",
         "push_notifications": bool(VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY),
-        "message": "Firestore and Firebase Storage are connected." if connected else "Configure Firebase persistence before accepting changes."
+        "message": "Website services are ready." if connected else "Website services are temporarily unavailable."
     }), (200 if connected else 503)
 
 
@@ -428,12 +411,7 @@ def upload_file():
 
     filename = f"{int(time.time())}_{uuid.uuid4().hex[:8]}_{secure_filename(file.filename)}"
     try:
-        if key == 'post_temp':
-            relative_path = upload_to_local_storage(file, filename)
-        else:
-            relative_path = upload_to_firebase_storage(file, filename, file.mimetype)
-    except RuntimeError as exc:
-        return jsonify({"success": False, "message": str(exc)}), 503
+        relative_path = upload_to_local_storage(file, filename)
     except OSError:
         app.logger.exception('Local image upload failed')
         return jsonify({"success": False, "message": "The image could not be saved"}), 500
@@ -476,9 +454,10 @@ def upload_admission_document():
 
     filename = f"admission_{document_type}_{uuid.uuid4().hex[:12]}_{secure_filename(file.filename)}"
     try:
-        path = upload_to_firebase_storage(file, filename, file.mimetype)
-    except RuntimeError as exc:
-        return jsonify({"success": False, "message": str(exc)}), 503
+        path = upload_to_local_storage(file, filename)
+    except OSError:
+        app.logger.exception('Local admission document upload failed')
+        return jsonify({"success": False, "message": "The document could not be saved"}), 500
     return jsonify({"success": True, "path": path})
 
 
