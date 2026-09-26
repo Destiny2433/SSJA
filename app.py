@@ -6,6 +6,7 @@ import copy
 import re
 from datetime import datetime, timedelta
 from pathlib import Path
+from urllib.parse import quote
 
 from flask import Flask, request, jsonify, send_from_directory, session, redirect, Response
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -145,7 +146,7 @@ VAPID_CLAIMS = {"sub": os.getenv('VAPID_SUBJECT', "mailto:okonudestiny4@gmail.co
 PAGES = {
     'index', 'about', 'academics', 'education-facilities', 'education-staff',
     'education-anthem', 'disciplinary-measures', 'school-rules-regulations',
-    'admissions', 'admission-form', 'jss-subjects', 'gallery', 'contact', 'admin',
+    'admissions', 'admission-form', 'jss-subjects', 'ss-subjects', 'gallery', 'contact', 'admin',
     'admin-dashboard', 'news'
 }
 
@@ -322,7 +323,7 @@ def page_not_found(error):
 @app.route('/robots.txt')
 def robots_txt():
     return Response(
-        f'User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /admin-dashboard\nDisallow: /api/\nSitemap: {SITE_URL}/sitemap.xml\n',
+        f'User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /admin-dashboard\nDisallow: /api/\nSitemap: {SITE_URL}/sitemap.xml\nSitemap: {SITE_URL}/image-sitemap.xml\n',
         mimetype='text/plain',
     )
 
@@ -331,12 +332,36 @@ def robots_txt():
 def sitemap_xml():
     public_pages = ['/', '/about', '/academics', '/education-facilities', '/education-staff',
                     '/education-anthem', '/school-rules-regulations', '/disciplinary-measures',
-                    '/admissions', '/admission-form', '/jss-subjects', '/news', '/gallery', '/contact']
+                    '/admissions', '/admission-form', '/jss-subjects', '/ss-subjects', '/news', '/gallery', '/contact']
     urls = ''.join(f'<url><loc>{SITE_URL}{page}</loc><changefreq>weekly</changefreq><priority>{"1.0" if page == "/" else "0.7"}</priority></url>' for page in public_pages)
     return Response(
         f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>',
         mimetype='application/xml',
     )
+
+
+@app.route('/image-sitemap.xml')
+def image_sitemap_xml():
+    """Expose the school's stable public images to image crawlers."""
+    public_images = [
+        'images/logo.png',
+        'images/school-building.png',
+        'images/Interactive classroom with engaged students.png',
+        'images/visit-to-sister-school.jpeg',
+        'images/EXCURSION.jpeg',
+        'images/sprot.jpeg',
+    ]
+    image_entries = ''.join(
+        f'<url><loc>{SITE_URL}/</loc><image:image><image:loc>{SITE_URL}/{quote(path)}</image:loc></image:image></url>'
+        for path in public_images
+    )
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '
+        'xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">'
+        f'{image_entries}</urlset>'
+    )
+    return Response(xml, mimetype='application/xml')
 
 
 @app.route('/api/health', methods=['GET'])

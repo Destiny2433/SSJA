@@ -764,6 +764,12 @@ footer .d-flex.gap-3 a:hover {
     transition: opacity 0.5s ease, visibility 0.5s ease;
 }
 
+/* Keep photographs and uploaded images responsive in every browser. */
+img {
+    max-width: 100%;
+    height: auto;
+}
+
 a { text-underline-offset: 3px; }
 a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
     outline: 3px solid rgba(255, 193, 7, .75);

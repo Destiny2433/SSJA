@@ -55,7 +55,7 @@ PLACEHOLDER_POSTS = [
         "title": "Open Day and Parent Engagement Forum",
         "category": "event",
         "content": "Parents are invited to an upcoming Open Day and engagement forum designed to strengthen communication between home and school. The event will showcase student progress, school activities, and future opportunities for partnership.",
-        "image_path": "images/hero-bg.jpg",
+        "image_path": "images/school-building.png",
         "date": "2026-09-02",
     },
     {

@@ -9,6 +9,22 @@ document.addEventListener('DOMContentLoaded', () => {
     list.innerHTML = `<li class="nav-item"><a class="nav-link" href="/">Home</a></li><li class="nav-item"><a class="nav-link" href="about">About Us</a></li><li class="nav-item dropdown"><a class="nav-link dropdown-toggle" href="academics" data-bs-toggle="dropdown">Academics</a><ul class="dropdown-menu"><li><a class="dropdown-item" href="academics">Overview</a></li><li><a class="dropdown-item" href="jss-subjects">JSS Subjects</a></li><li><a class="dropdown-item" href="education-facilities">Facilities</a></li><li><a class="dropdown-item" href="school-rules-regulations">Rules &amp; Regulations</a></li><li><a class="dropdown-item" href="disciplinary-measures">Discipline</a></li><li><a class="dropdown-item" href="education-anthem">Anthem</a></li></ul></li><li class="nav-item"><a class="nav-link" href="admissions">Admissions</a></li><li class="nav-item"><a class="nav-link" href="admission-form">Admission Form</a></li><li class="nav-item"><a class="nav-link" href="news">News &amp; Events</a></li><li class="nav-item"><a class="nav-link" href="gallery">Gallery</a></li><li class="nav-item"><a class="nav-link" href="contact">Contact</a></li><li class="nav-item"><a class="nav-link" href="https://schoolos.osartech.com.ng/" target="_blank" rel="noopener">Portal</a></li>`;
 });
 
+// Keep the SS subject catalog discoverable even on pages with the older static nav.
+document.addEventListener('DOMContentLoaded', () => {
+    const academicsMenu = document.querySelector('.navbar-nav .dropdown-menu');
+    if (academicsMenu && !academicsMenu.querySelector('a[href="ss-subjects"]')) {
+        academicsMenu.insertAdjacentHTML('beforeend', '<li><a class="dropdown-item" href="ss-subjects">SS Subjects</a></li>');
+    }
+});
+
+// Let browsers decode images efficiently without delaying the first visible brand mark.
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('img').forEach((image, index) => {
+        image.decoding = 'async';
+        if (index > 0 && !image.closest('.hero')) image.loading = 'lazy';
+    });
+});
+
 // Preloader Logic - wait for database synchronization before hiding.
 document.addEventListener('DOMContentLoaded', () => {
     const preloader = document.createElement('div');
