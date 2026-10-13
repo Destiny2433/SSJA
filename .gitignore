@@ -21,7 +21,7 @@ env/
 Thumbs.db
 
 # Uploads (keep folder, ignore files)
-images/uploads/*
+
 !images/uploads/.gitkeep
 
 # Config
