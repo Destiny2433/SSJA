@@ -81,11 +81,14 @@ PLACEHOLDER_POSTS = [
 ]
 
 DEFAULT_GALLERY = [
-    {"id": 1, "category": "events", "image_path": "images/visit-to-sister-school.jpeg", "title": "Visit to a Sister School", "description": "Students learning and connecting with another school community."},
+    {"id": 1, "category": "events", "image_path": "images/visit-to-sister-school.png", "title": "Visit to a Sister School", "description": "Students learning and connecting with another school community."},
     {"id": 2, "category": "classrooms", "image_path": "images/Interactive classroom with engaged students.png", "title": "Interactive Classroom", "description": "Engaging lessons that encourage participation and curiosity."},
     {"id": 3, "category": "sports", "image_path": "images/sprot.jpeg", "title": "School Sports", "description": "Students enjoying teamwork, fitness, and school spirit."},
     {"id": 4, "category": "events", "image_path": "images/EXCURSION.jpeg", "title": "Educational Excursion", "description": "Learning continues beyond the classroom."},
     {"id": 5, "category": "classrooms", "image_path": "images/school-building.png", "title": "Our School", "description": "A welcoming environment for learning and growth."},
+    {"id": 6, "category": "events", "image_path": "images/uploads/school_career_day.png", "title": "School Career Day", "description": "Students at School career Day"},
+{"id": 6, "category": "events", "image_path": "images/school-graduation.png", "title": "", "description": " "},
+ 
 ]
 
 

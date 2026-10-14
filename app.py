@@ -347,7 +347,7 @@ def image_sitemap_xml():
         'images/logo.png',
         'images/school-building.png',
         'images/Interactive classroom with engaged students.png',
-        'images/visit-to-sister-school.jpeg',
+        'images/visit-to-sister-school.png',
         'images/EXCURSION.jpeg',
         'images/sprot.jpeg',
     ]
