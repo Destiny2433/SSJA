@@ -87,7 +87,7 @@ DEFAULT_GALLERY = [
     {"id": 4, "category": "events", "image_path": "images/EXCURSION.jpeg", "title": "Educational Excursion", "description": "Learning continues beyond the classroom."},
     {"id": 5, "category": "classrooms", "image_path": "images/school-building.png", "title": "Our School", "description": "A welcoming environment for learning and growth."},
     {"id": 6, "category": "events", "image_path": "images/uploads/school_career_day.png", "title": "School Career Day", "description": "Students at School career Day"},
-{"id": 6, "category": "events", "image_path": "images/school-graduation.png", "title": "", "description": " "},
+    {"id": 7, "category": "events", "image_path": "images/school-graduation.png", "title": "", "description": " "},
  
 ]
 
